@@ -2,51 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-//////////
-// 
-//  o = outerWall
-//  w = wall
-//  p = player
-//  b = box
-//  g = goal
-//  e = empty
-//
-//////////
-
-public struct BoardState
-{
-    public char[,] layout;
-
-    public void Initialise(int _width, int _height, char _initObj = 'e')
-    {
-        // Adds 2 more spaces in each direction for outer walls of level
-        // Also makes neighbour checking easier, can't go out of bounds
-        layout = new char[_height + 2, _width + 2];
-
-        for (int i = 0; i < _height + 2; i++)
-        {
-            for (int j = 0; j < _width + 2; j++)
-            {
-                if (i == 0 || i == _height + 1 || j == 0 || j == _width + 1)
-                {
-                    layout[i, j] = 'o';
-                }
-                else
-                {
-                    layout[i, j] = _initObj;
-                }    
-            }
-        }
-    }
-}
 
 public class LevelGenerator : MonoBehaviour
 {
     static int levelWidth = 5;
     static int levelHeight = 5;
-    float k = 1.0f;
+    //float k = 1.0f;
 
-    BoardState initialBoard;
+    State initialBoard;
 
     public GameObject wall;
     public GameObject player;
@@ -74,11 +37,11 @@ public class LevelGenerator : MonoBehaviour
             {
                 if (i == (levelHeight - 1) / 2 && j == (levelWidth - 1) / 2)
                 {
-                    initialBoard.layout[i, j] = 'p';
+                    initialBoard.boardState[i, j] = 'p';
                 }
                 else
                 {
-                    initialBoard.layout[i, j] = 'w';
+                    initialBoard.boardState[i, j] = 'w';
                 }
             }
         }
@@ -97,7 +60,7 @@ public class LevelGenerator : MonoBehaviour
         return 1.0f;
     }
 
-    float TerrainMetric(BoardState _board)
+    float TerrainMetric(State _board)
     {
         int terainMetric = 0;
 
@@ -105,17 +68,17 @@ public class LevelGenerator : MonoBehaviour
         {
             for (int j = 1; j < levelWidth + 1; j++)
             {
-                if (_board.layout[i, j] == 'e')
+                if (_board.boardState[i, j] == 'e')
                 {
                     // Adds 1 to terrainMetric for every neighbouring wall
-                    terainMetric += (_board.layout[i - 1, j - 1] == 'w') ? 1 : 0;
-                    terainMetric += (_board.layout[i - 1, j] == 'w') ? 1 : 0;
-                    terainMetric += (_board.layout[i - 1, j + 1] == 'w') ? 1 : 0;
-                    terainMetric += (_board.layout[i, j - 1] == 'w') ? 1 : 0;
-                    terainMetric += (_board.layout[i, j + 1] == 'w') ? 1 : 0;
-                    terainMetric += (_board.layout[i + 1, j - 1] == 'w') ? 1 : 0;
-                    terainMetric += (_board.layout[i + 1, j] == 'w') ? 1 : 0;
-                    terainMetric += (_board.layout[i + 1, j + 1] == 'w') ? 1 : 0;
+                    terainMetric += (_board.boardState[i - 1, j - 1] == 'w') ? 1 : 0;
+                    terainMetric += (_board.boardState[i - 1, j] == 'w') ? 1 : 0;
+                    terainMetric += (_board.boardState[i - 1, j + 1] == 'w') ? 1 : 0;
+                    terainMetric += (_board.boardState[i, j - 1] == 'w') ? 1 : 0;
+                    terainMetric += (_board.boardState[i, j + 1] == 'w') ? 1 : 0;
+                    terainMetric += (_board.boardState[i + 1, j - 1] == 'w') ? 1 : 0;
+                    terainMetric += (_board.boardState[i + 1, j] == 'w') ? 1 : 0;
+                    terainMetric += (_board.boardState[i + 1, j + 1] == 'w') ? 1 : 0;
                 }
             }
         }
@@ -126,7 +89,7 @@ public class LevelGenerator : MonoBehaviour
         // max value equation:                      i * (i - 1) * 2
     }
 
-    void CreateLevel(BoardState _board)
+    void CreateLevel(State _board)
     {
         int xStartPos = -(levelWidth + 1) / 2;
         int yStartPos = -(levelHeight + 1) / 2;
@@ -138,7 +101,7 @@ public class LevelGenerator : MonoBehaviour
         {
             for (int j = 0; j < levelWidth + 2;  j++)
             {
-                switch(_board.layout[i, j])
+                switch(_board.boardState[i, j])
                 {
                     case 'w':
                     case 'o':
