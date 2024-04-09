@@ -5,7 +5,7 @@ using UnityEngine;
 public class Node : MonoBehaviour
 {
     public float evaluationScore = 0.0f;
-    public float numTimesTried = 0.0f;
+    public float visitCount = 0.0f;
 
     public List<Node> children;
     bool isFullyExpanded; // Need to determine if this is true
@@ -57,5 +57,18 @@ public class Node : MonoBehaviour
     void Update()
     {
         // Update timesVisited and evaluationScore
+    }
+
+    float GetUCB(float _parentVisitCount)
+    {
+        // Check this /////
+
+        // UCB(s) = w(PIs) + C * sqrt(lnpv / sv)
+
+        float UCB = (evaluationScore / visitCount) + (Util.C * Mathf.Sqrt(Mathf.Log(_parentVisitCount) / visitCount));
+        // Figure out better way to get parent visit count
+        // Check for division by 0
+
+        return UCB;
     }
 }
