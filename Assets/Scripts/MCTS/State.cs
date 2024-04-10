@@ -16,6 +16,12 @@ using UnityEngine;
 public class State : MonoBehaviour
 {
     public char[,] boardState;
+    public bool frozen = false;
+    public bool saved = false;
+
+    int boxCount = 0;
+    List<Vector2> boxPos;
+    List<Vector2> boxStartPos;
 
     public void Initialise(int _width, int _height, char _initObj = 'e')
     {
@@ -37,5 +43,44 @@ public class State : MonoBehaviour
                 }
             }
         }
+    }
+
+    public float GetCongestion()
+    {
+        // scaling weights
+        float a = 1.0f;
+        float b = 1.0f;
+        float c = 1.0f;
+
+        float congestionScore = 0.0f;
+
+        for (int i = 0; i < boxCount; i++)
+        {
+
+        }
+
+        return congestionScore;
+    }
+
+    public float GetBoxCount()
+    {
+        return boxCount;
+    }
+
+    public float Get3x3BlockCount()
+    {
+        return 0.0f;
+    }
+
+    float GetBoxStartPosInArea(Vector2 _areaStart, Vector2 _areaEnd)
+    {
+        float num = 0.0f;
+
+        foreach(Vector2 pos in boxStartPos)
+        {
+            // Figure out how to check if its in area
+        }
+
+        return num;
     }
 }
