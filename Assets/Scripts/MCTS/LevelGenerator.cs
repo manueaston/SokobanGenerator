@@ -19,7 +19,7 @@ public class LevelGenerator : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        initialBoard.Initialise(levelWidth, levelHeight, 'w');
+        initialBoard.Initialise(levelWidth, levelHeight);
         CreateLevel(initialBoard);
     }
 

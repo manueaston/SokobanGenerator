@@ -13,6 +13,14 @@ using UnityEngine;
 //
 //////////
 
+enum Direction
+{
+    Up,
+    Down,
+    Left,
+    Right
+}
+
 public class State : MonoBehaviour
 {
     public char[,] boardState;
@@ -130,16 +138,51 @@ public class State : MonoBehaviour
 
     public void MoveAgentRandomly()
     {
-        // Get agent position
+        List<Direction> possibleDirections = new List<Direction> { Direction.Up, Direction.Down, Direction.Left, Direction.Right };
 
-        // Choose random neighboring space that is empty or has a movable box
+        while(true)
+        {
+            // Choose random direction that hasn't been checked yet
+            int randomIndex = Random.Range(0, possibleDirections.Count - 1);
+            Direction direction = possibleDirections[randomIndex];
 
-        // Set original position to empty
-        // Set new position to player
-        // If box moved, set new box position
+            // Get space in direction
+            Vector2Int newSpace = GetSpace(playerPos, direction);
 
+            // Check if player can move to this space
+            if (boardState[newSpace.x, newSpace.y] == 'e')
+            {
+                // Can move to empty space
+                SwapSpaces(playerPos, newSpace);
+                playerPos = newSpace;
+                break;
+            }
+            else if (boardState[newSpace.x, newSpace.y] == 'b')
+            {
+                Vector2Int newBoxSpace = GetSpace(newSpace, direction);
 
+                // Check if box has empty space to be pushed into
+                if (boardState[newBoxSpace.x, newBoxSpace.y] == 'e')
+                {
+                    // Can push box into empty space
+                    SwapSpaces(newSpace, newBoxSpace);
+                    SwapSpaces(playerPos, newSpace);
+                    playerPos = newSpace;
+                    break;
+                }
+            }
 
+            // Space is not valid to move into
+            // Remove direction from list of possible directions
+            possibleDirections.RemoveAt(randomIndex);
+
+            // Check if there are no valid directions in list
+            if (possibleDirections.Count == 0)
+            {
+                Debug.LogError("No valid moves for player");
+                break;
+            }
+        }
     }
 
     Vector2Int GetRandomSpace(char _spaceType)
@@ -161,17 +204,13 @@ public class State : MonoBehaviour
         List<Vector2Int> validNeighbors = new List<Vector2Int>();
 
         // Add to list all neighbors that have matching space type
-        if (boardState[_pos.x - 1, _pos.y] == _spaceType)
-            validNeighbors.Add(new Vector2Int(_pos.x - 1, _pos.y));
+        foreach (Direction direction in System.Enum.GetValues(typeof(Direction)))
+        {
+            Vector2Int neighbor = GetSpace(_pos, direction);
 
-        if (boardState[_pos.x + 1, _pos.y] == _spaceType)
-            validNeighbors.Add(new Vector2Int(_pos.x + 1, _pos.y));
-
-        if (boardState[_pos.x, _pos.y - 1] == _spaceType)
-            validNeighbors.Add(new Vector2Int(_pos.x, _pos.y - 1));
-
-        if (boardState[_pos.x, _pos.y + 1] == _spaceType)
-            validNeighbors.Add(new Vector2Int(_pos.x , _pos.y + 1));
+            if (boardState[neighbor.x, neighbor.y] == _spaceType)
+                validNeighbors.Add(neighbor);
+        }
 
 
         if (validNeighbors.Count == 0)
@@ -180,5 +219,55 @@ public class State : MonoBehaviour
         else
             // Return random neigbor from valid neighbor list
             return validNeighbors[Random.Range(0, validNeighbors.Count - 1)];
+    }
+
+    Vector2Int GetRandomNeighbor(Vector2Int _pos, char _spaceType1, char _spaceType2)
+    {
+        List<Vector2Int> validNeighbors = new List<Vector2Int>();
+
+        // Add to list all neighbors that have matching space type
+        foreach (Direction direction in System.Enum.GetValues(typeof(Direction)))
+        {
+            Vector2Int neighbor = GetSpace(_pos, direction);
+
+            if (boardState[neighbor.x, neighbor.y] == _spaceType1 || boardState[neighbor.x, neighbor.y] == _spaceType2)
+                validNeighbors.Add(neighbor);
+        }
+
+        if (validNeighbors.Count == 0)
+            // No neighboring spaces of space type
+            return Vector2Int.zero;
+        else
+            // Return random neigbor from valid neighbor list
+            return validNeighbors[Random.Range(0, validNeighbors.Count - 1)];
+    }
+
+    Vector2Int GetSpace(Vector2Int _startPos, Direction _dir)
+    {
+        switch (_dir)
+        {
+            case Direction.Up:
+                return new Vector2Int(_startPos.x - 1, _startPos.y);
+
+            case Direction.Down:
+                return new Vector2Int(_startPos.x + 1, _startPos.y);
+
+            case Direction.Left:
+                return new Vector2Int(_startPos.x, _startPos.y - 1);
+
+            case Direction.Right:
+                return new Vector2Int(_startPos.x, _startPos.y + 1);
+
+            default:
+                return new Vector2Int(_startPos.x, _startPos.y);
+        }
+    }
+
+    void SwapSpaces(Vector2Int _space1, Vector2Int _space2)
+    {
+        // Swaps values of two spaces
+        char space1Value = boardState[_space1.x, _space1.y];
+        boardState[_space1.x, _space1.y] = boardState[_space2.x, _space2.y];
+        boardState[_space2.x, _space2.y] = space1Value;
     }
 }
