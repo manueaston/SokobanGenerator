@@ -2,6 +2,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum EActionType
+{
+    DeleteObstacle,
+    PlaceBox,
+    FreezeLevel,
+    MoveAgent,
+    EvaluateLevel
+}
+
 public class Node : MonoBehaviour
 {
     State nodeState;
@@ -10,7 +19,6 @@ public class Node : MonoBehaviour
     public float visitCount = 0.0f;
 
     public List<Node> children;
-    int childrenVisited = 0;
     bool isVisited = false;
 
     public Node(State _state)
@@ -25,7 +33,7 @@ public class Node : MonoBehaviour
         visitedNodes.AddLast(currentNode);
 
         // Selection
-        while (currentNode.isVisited)
+        while (currentNode.isVisited && currentNode.nodeState.saved != true)
         {
             currentNode = Select(currentNode);
             visitedNodes.AddLast(currentNode);
@@ -65,30 +73,62 @@ public class Node : MonoBehaviour
 
     void Expand()   // Creates children nodes
     {
-        if (nodeState.frozen)
-        {
-            // Available actions: Move agent, Evaluate level
-
-
-        }
-        else
+        if (nodeState.frozen == false)
         {
             // Available actions: Delete obstacle, Place box, Freeze level
+            AddChildNode(EActionType.DeleteObstacle);
+            AddChildNode(EActionType.PlaceBox);
+            AddChildNode(EActionType.FreezeLevel);
 
-
+        }
+        else if (nodeState.saved == false)
+        {
+            // Available actions: Move agent, Evaluate level
+            AddChildNode(EActionType.MoveAgent);
+            AddChildNode(EActionType.EvaluateLevel);
         }
     }
 
-    Node AddNode()
+    void AddChildNode(EActionType _action)
     {
         // Create child node
         // Create action links for child
 
-        return null;
+        Node newChildNode = this;
+
+        switch (_action)
+        {
+            case EActionType.DeleteObstacle:
+                newChildNode.nodeState.DeleteRandomObstacle();
+                break;
+
+            case EActionType.PlaceBox:
+                newChildNode.nodeState.PlaceRandomBox();
+                break;
+
+            case EActionType.FreezeLevel:
+                newChildNode.nodeState.frozen = true;
+                break;
+
+            case EActionType.MoveAgent:
+                newChildNode.nodeState.MoveAgentRandomly();
+                break;
+
+            case EActionType.EvaluateLevel:
+                newChildNode.nodeState.saved = true;
+                break;
+
+            default:
+                break;
+        }
+
+        children.Add(newChildNode);
     }
 
     float Evaluate()
     {
+        isVisited = true;
+
         // scaling weights
         float b = 5.0f;
         float c = 10.0f;
@@ -97,6 +137,12 @@ public class Node : MonoBehaviour
         float k = 50.0f;
 
         float evaluationScore =  ((b * nodeState.Get3x3BlockCount()) + (c * nodeState.GetCongestion()) + (n * nodeState.GetBoxCount())) / k;
+
+        if (nodeState.saved == true)
+        {
+            // Save node as start configuration and apply post-processing
+            // TODO ///////
+        }
 
         return evaluationScoreSum;
     }
