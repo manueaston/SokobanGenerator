@@ -35,7 +35,7 @@ public class Node : MonoBehaviour
         // Selection
         while (currentNode.isVisited && currentNode.nodeState.saved != true)
         {
-            currentNode = Select(currentNode);
+            currentNode = currentNode.Select();
             visitedNodes.AddLast(currentNode);
         }
 
@@ -52,7 +52,7 @@ public class Node : MonoBehaviour
         }
     }
 
-    Node Select(Node _node)
+    Node Select()
     {
         float highestUCB = 0.0f;
         Node selectedChild = null;
@@ -65,6 +65,10 @@ public class Node : MonoBehaviour
             {
                 highestUCB = currentUCB;
                 selectedChild = child;
+
+                if (!selectedChild.isVisited)
+                    break;
+                // Will always choose first child that hasn't been visited
             }
         }
 
@@ -160,6 +164,12 @@ public class Node : MonoBehaviour
         // Check this /////
 
         // UCB(s) = w(PIs) + C * sqrt(lnpv / sv)
+
+        if (visitCount == 0.0f)
+        {
+            // If child has never been visited, will choose this child
+            return 10.0f;
+        }
 
         float UCB = (evaluationScoreSum / visitCount) + (Util.C * Mathf.Sqrt(Mathf.Log(_parentVisitCount) / visitCount));
         // Figure out better way to get parent visit count

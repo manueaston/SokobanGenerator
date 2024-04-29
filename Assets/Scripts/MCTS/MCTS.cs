@@ -10,9 +10,9 @@ public class MCTS : MonoBehaviour
     /*
      TODO:
 
-     - Evaluation metrics
+     - Apply post processing on board save
      - Check selection formula
-     - Save board states when leaf node, and apply post-processing
+     - Save board states when leaf node
      - Start algorithm and show starting configurations generated
      
     */

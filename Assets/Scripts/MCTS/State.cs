@@ -80,7 +80,52 @@ public class State : MonoBehaviour
 
         for (int i = 0; i < boxCount; i++)
         {
+            // Area variables
+            float height;
+            float width;
+            // These counts are within bounding rectangle between start and goal for box
+            float startCount = 0.0f;
+            float goalCount = 0.0f;
+            float wallCount = 0.0f;
 
+            // Calculate area of bounding rectangle using box position and starting position
+            height = Mathf.Abs(boxPos[i].x - boxStartPos[i].x);
+            width = Mathf.Abs(boxPos[i].y - boxStartPos[i].y);
+
+            for (int x = Mathf.Min(boxPos[i].x, boxStartPos[i].x); x <= Mathf.Max(boxPos[i].x, boxStartPos[i].x); x++)
+            {
+                for (int y = Mathf.Min(boxPos[i].y, boxStartPos[i].y); y <= Mathf.Max(boxPos[i].y, boxStartPos[i].y); y++)
+                {
+                    Vector2Int tilePos = new Vector2Int(x, y);
+                    if (tilePos == boxPos[i] || tilePos == boxStartPos[i])
+                    {
+                        // Don't include start and end positions of box
+                        break;
+                    }
+
+                    if (boardState[x, y] == 'b')    // check if tile is a goal 
+                    {
+                        goalCount++;
+                    }
+                    else if (boardState[x, y] == 'w')   // check if tile is a wall
+                    {
+                        wallCount++;
+                    }
+
+                    foreach (Vector2Int pos in boxStartPos)     // check if tile is a box start position
+                    {
+                        if (tilePos == pos)
+                        {
+                            startCount++;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Add box congestion value to congestion score
+            float area = width * height;
+            congestionScore += (((a * startCount) + (b * goalCount)) / (c * (area - wallCount)));
         }
 
         return congestionScore;
@@ -93,7 +138,77 @@ public class State : MonoBehaviour
 
     public float Get3x3BlockCount()
     {
-        return 0.0f;
+        float[,] tilesInBlock = new float[height, width];
+        // 1.0f = not in block, 0.0f = in block
+
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                // Initialise tile value
+                tilesInBlock[y, x] = 1.0f;
+
+                if (y >= height - 2 || x >= width - 2)
+                {
+                    // Checks board starting from top left and moving to the right and down
+                    // Only checks a tile for 3x3 block if is the top left in block
+                    // Tiles in last 2 rows and columns cannot be this top left tile, and so are skipped over
+                    continue;
+                }
+
+                // Get tile type 
+                char tile = boardState[y + 1, x + 1];   // + 1 to avoid boarder tiles
+
+                if (tile != 'e' && tile != 'w')
+                {
+                    // If not empty or obstacle, not part of 3x3 block
+                    continue;
+                }
+
+                bool inBlock = true;
+                for (int i = 1; i < 3; i++)
+                {
+                    for (int j = 1; j < 3; j++)
+                    {
+                        // Checks tiles in 3x3 block
+                        // if not same tile as original tile, not in 3x3 block
+
+                        if (boardState[y + 1 + i, x + 1 + j] != tile)
+                        {
+                            inBlock = false;
+                            break;
+                        }
+                    }
+
+                    if (!inBlock)
+                        break;
+                }
+
+                if (inBlock)
+                {
+                    // Is in 3x3 block
+                    // Set tiles to true
+
+                    for (int i = 1; i < 3; i++)
+                    {
+                        for (int j = 1; j < 3; j++)
+                        {
+                            tilesInBlock[y + i, x + j] = 0.0f;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Return how many tiles are in 3x3 blocks
+        float tileCount = 0.0f;
+
+        foreach (float tile in tilesInBlock)
+        {
+            tileCount += tile;
+        }
+
+        return tileCount;
     }
 
     float GetBoxStartPosInArea(Vector2 _areaStart, Vector2 _areaEnd)
@@ -134,6 +249,8 @@ public class State : MonoBehaviour
         // Add position to box pos lists
         boxPos.Add(emptySpace);
         boxStartPos.Add(emptySpace);
+
+        boxCount++;
     }
 
     public void MoveAgentRandomly()
@@ -159,6 +276,7 @@ public class State : MonoBehaviour
             }
             else if (boardState[newSpace.x, newSpace.y] == 'b')
             {
+                // Find where box will move
                 Vector2Int newBoxSpace = GetSpace(newSpace, direction);
 
                 // Check if box has empty space to be pushed into
@@ -166,6 +284,7 @@ public class State : MonoBehaviour
                 {
                     // Can push box into empty space
                     SwapSpaces(newSpace, newBoxSpace);
+                    SetBoxPos(newSpace, newBoxSpace);
                     SwapSpaces(playerPos, newSpace);
                     playerPos = newSpace;
                     break;
@@ -269,5 +388,17 @@ public class State : MonoBehaviour
         char space1Value = boardState[_space1.x, _space1.y];
         boardState[_space1.x, _space1.y] = boardState[_space2.x, _space2.y];
         boardState[_space2.x, _space2.y] = space1Value;
+    }
+
+    void SetBoxPos(Vector2Int _oldPos, Vector2Int _newPos)
+    {
+        for (int i = 0; i < boxPos.Count; i++)
+        {
+            if (boxPos[i] == _oldPos)
+            {
+                boxPos[i] = _newPos;
+                break;
+            }
+        }
     }
 }
