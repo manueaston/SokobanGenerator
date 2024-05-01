@@ -9,7 +9,7 @@ public class LevelGenerator : MonoBehaviour
     static int levelHeight = 5;
     //float k = 1.0f;
 
-    State initialBoard;
+    State initialBoard = new State();
 
     public GameObject wall;
     public GameObject player;
@@ -21,12 +21,8 @@ public class LevelGenerator : MonoBehaviour
     {
         initialBoard.Initialise(levelWidth, levelHeight);
         CreateLevel(initialBoard);
-    }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
+        StartMCTS();
     }
 
     void SetupInitialBoard()
@@ -47,50 +43,26 @@ public class LevelGenerator : MonoBehaviour
         }
     }
 
-    float Evaluate()
+    void StartMCTS()
     {
-        //float p = Mathf.Sqrt(TerrainMetric() * CongestionMetric()) / k;
+        Debug.Log("Start MCTS");
 
-        //return p;
-        return 1.0f;
-    }
+        Node rootNode = new Node(initialBoard, this);
 
-    float CongestionMetric()
-    {
-        return 1.0f;
-    }
+        //CreateLevel(rootNode.nodeState);
 
-    float TerrainMetric(State _board)
-    {
-        int terainMetric = 0;
+        int iterationNum = 1;
 
-        for (int i = 1; i < levelHeight + 1; i++)
+        for (int i = 0; i < iterationNum; i++)
         {
-            for (int j = 1; j < levelWidth + 1; j++)
-            {
-                if (_board.boardState[i, j] == 'e')
-                {
-                    // Adds 1 to terrainMetric for every neighbouring wall
-                    terainMetric += (_board.boardState[i - 1, j - 1] == 'w') ? 1 : 0;
-                    terainMetric += (_board.boardState[i - 1, j] == 'w') ? 1 : 0;
-                    terainMetric += (_board.boardState[i - 1, j + 1] == 'w') ? 1 : 0;
-                    terainMetric += (_board.boardState[i, j - 1] == 'w') ? 1 : 0;
-                    terainMetric += (_board.boardState[i, j + 1] == 'w') ? 1 : 0;
-                    terainMetric += (_board.boardState[i + 1, j - 1] == 'w') ? 1 : 0;
-                    terainMetric += (_board.boardState[i + 1, j] == 'w') ? 1 : 0;
-                    terainMetric += (_board.boardState[i + 1, j + 1] == 'w') ? 1 : 0;
-                }
-            }
+           // rootNode.SearchTree();
         }
-
-        return terainMetric;
-
-        // I think the max possible value is 40
-        // max value equation:                      i * (i - 1) * 2
     }
-
-    void CreateLevel(State _board)
+    
+    public void CreateLevel(State _board)
     {
+        _board.ApplyPostProcessing();
+
         int xStartPos = -(levelWidth + 1) / 2;
         int yStartPos = -(levelHeight + 1) / 2;
         int xPos = xStartPos;

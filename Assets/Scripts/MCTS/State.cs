@@ -21,7 +21,7 @@ enum Direction
     Right
 }
 
-public class State : MonoBehaviour
+public class State
 {
     public char[,] boardState;
     public bool frozen = false;
@@ -304,6 +304,38 @@ public class State : MonoBehaviour
         }
     }
 
+    public void Save()
+    {
+        saved = true;
+
+        // Replace boxes that have never been pushed with obstacles
+        // Replace boxes that have only been pushed once with empty spaces
+
+        for (int i = 0; i < boxCount; i++)
+        {
+            if (Vector2Int.Distance(boxPos[i], boxStartPos[i]) <= 1)    // If box has moved less than 2 spaces
+            {
+                if (boxPos[i] == boxStartPos[i])    // box hasn't moved at all
+                {
+                    // Set space as wall
+                    boardState[boxPos[i].x, boxPos[i].y] = 'w';
+                }
+                else   // box moved once
+                {
+                    // Set spaces as empty
+                    boardState[boxPos[i].x, boxPos[i].y] = 'e';
+                }
+
+                // Clear from box lists
+                boxPos.RemoveAt(i);
+                boxCount--;
+
+                // If box has been removed from list, index of other boxes has decreased
+                i--;
+            }
+        }
+    }
+
     Vector2Int GetRandomSpace(char _spaceType)
     {
         Vector2Int space;
@@ -399,6 +431,27 @@ public class State : MonoBehaviour
                 boxPos[i] = _newPos;
                 break;
             }
+        }
+    }
+
+    public void ApplyPostProcessing()
+    {
+        // Final box positions into goals
+        for (int i = 1; i <= height; i++)
+        {
+            for (int j = 1; j <= width; j++)
+            {
+                if (boardState[i, j] == 'b')
+                {
+                    boardState[i, j] = 'g';
+                }
+            }
+        }
+
+        // Starting box position into boxes
+        for (int i = 0; i < boxCount; i++)
+        {
+            boardState[boxStartPos[i].x, boxStartPos[i].y] = 'b';
         }
     }
 }

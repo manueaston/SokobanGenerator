@@ -11,9 +11,9 @@ public enum EActionType
     EvaluateLevel
 }
 
-public class Node : MonoBehaviour
+public class Node
 {
-    State nodeState;
+    public State nodeState;     // Remove public    ////////////////////
 
     public float evaluationScoreSum = 0.0f;
     public float visitCount = 0.0f;
@@ -21,13 +21,18 @@ public class Node : MonoBehaviour
     public List<Node> children;
     bool isVisited = false;
 
-    public Node(State _state)
+    public LevelGenerator levelGenerator;
+
+    public Node(State _state, LevelGenerator _lg)
     {
         nodeState = _state;
+        levelGenerator = _lg;
     }
 
     public void SearchTree()    // Called for root node, initial state of board
     {
+        Debug.Log("Searching Tree");
+
         LinkedList<Node> visitedNodes = new LinkedList<Node>();
         Node currentNode = this;
         visitedNodes.AddLast(currentNode);
@@ -38,6 +43,7 @@ public class Node : MonoBehaviour
             currentNode = currentNode.Select();
             visitedNodes.AddLast(currentNode);
         }
+        Debug.Log("Node Selected");
 
         // Expansion
         currentNode.Expand();
@@ -46,6 +52,7 @@ public class Node : MonoBehaviour
         float evaluationValue = currentNode.Evaluate();
 
         // Backpropogation
+        Debug.Log("Backpropogating");
         foreach (Node node in visitedNodes)
         {
             node.UpdateNode(evaluationValue);
@@ -77,6 +84,8 @@ public class Node : MonoBehaviour
 
     void Expand()   // Creates children nodes
     {
+        Debug.Log("Expanding Node");
+
         if (nodeState.frozen == false)
         {
             // Available actions: Delete obstacle, Place box, Freeze level
@@ -119,7 +128,7 @@ public class Node : MonoBehaviour
                 break;
 
             case EActionType.EvaluateLevel:
-                newChildNode.nodeState.saved = true;
+                newChildNode.nodeState.Save();
                 break;
 
             default:
@@ -131,6 +140,8 @@ public class Node : MonoBehaviour
 
     float Evaluate()
     {
+        Debug.Log("Evaluating Node");
+
         isVisited = true;
 
         // scaling weights
@@ -144,8 +155,8 @@ public class Node : MonoBehaviour
 
         if (nodeState.saved == true)
         {
-            // Save node as start configuration and apply post-processing
-            // TODO ///////
+            levelGenerator.CreateLevel(nodeState);
+            Debug.Log("Node Saved as start layout");
         }
 
         return evaluationScoreSum;
