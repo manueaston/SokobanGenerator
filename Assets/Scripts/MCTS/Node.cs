@@ -18,7 +18,7 @@ public class Node
     public float evaluationScoreSum = 0.0f;
     public float visitCount = 0.0f;
 
-    public List<Node> children;
+    public List<Node> children = new List<Node>();
     bool isVisited = false;
 
     public LevelGenerator levelGenerator;
@@ -40,6 +40,7 @@ public class Node
         // Selection
         while (currentNode.isVisited && currentNode.nodeState.saved != true)
         {
+            Debug.Log("Searching");
             currentNode = currentNode.Select();
             visitedNodes.AddLast(currentNode);
         }
@@ -48,15 +49,15 @@ public class Node
         // Expansion
         currentNode.Expand();
 
-        // Evaluation
-        float evaluationValue = currentNode.Evaluate();
+        //// Evaluation
+        //float evaluationValue = currentNode.Evaluate();
 
-        // Backpropogation
-        Debug.Log("Backpropogating");
-        foreach (Node node in visitedNodes)
-        {
-            node.UpdateNode(evaluationValue);
-        }
+        //// Backpropogation
+        //Debug.Log("Backpropogating");
+        //foreach (Node node in visitedNodes)
+        //{
+        //    node.UpdateNode(evaluationValue);
+        //}
     }
 
     Node Select()
@@ -88,6 +89,7 @@ public class Node
 
         if (nodeState.frozen == false)
         {
+            Debug.Log("Node state is frozen");
             // Available actions: Delete obstacle, Place box, Freeze level
             AddChildNode(EActionType.DeleteObstacle);
             AddChildNode(EActionType.PlaceBox);
@@ -107,7 +109,9 @@ public class Node
         // Create child node
         // Create action links for child
 
-        Node newChildNode = this;
+        Debug.Log("Adding child node");
+
+        Node newChildNode = new Node(nodeState, levelGenerator);
 
         switch (_action)
         {
@@ -120,7 +124,7 @@ public class Node
                 break;
 
             case EActionType.FreezeLevel:
-                newChildNode.nodeState.frozen = true;
+                //newChildNode.nodeState.frozen = true;
                 break;
 
             case EActionType.MoveAgent:

@@ -25,42 +25,26 @@ public class LevelGenerator : MonoBehaviour
         StartMCTS();
     }
 
-    void SetupInitialBoard()
-    {
-        for (int i = 0; i < levelHeight; i++)
-        {
-            for (int j = 0; j < levelWidth; j++)
-            {
-                if (i == (levelHeight - 1) / 2 && j == (levelWidth - 1) / 2)
-                {
-                    initialBoard.boardState[i, j] = 'p';
-                }
-                else
-                {
-                    initialBoard.boardState[i, j] = 'w';
-                }
-            }
-        }
-    }
-
     void StartMCTS()
     {
         Debug.Log("Start MCTS");
 
         Node rootNode = new Node(initialBoard, this);
 
-        //CreateLevel(rootNode.nodeState);
+        CreateLevel(rootNode.nodeState);
 
         int iterationNum = 1;
 
         for (int i = 0; i < iterationNum; i++)
         {
-           // rootNode.SearchTree();
+           rootNode.SearchTree();
         }
     }
     
     public void CreateLevel(State _board)
     {
+        Debug.Log("Create Level");
+
         _board.ApplyPostProcessing();
 
         int xStartPos = -(levelWidth + 1) / 2;

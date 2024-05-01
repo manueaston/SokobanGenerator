@@ -56,8 +56,8 @@ public class State
                 }
                 else if (i == (height + 1) / 2 && j == (width + 1) / 2)
                 {
-                    // Player is in centre of board
-                    boardState[i, j] = 'p';
+                    // Centre of board starts as empty, will be player start position
+                    boardState[i, j] = 'e';
                     playerPos = new Vector2Int(i, j);
                 }
                 else
@@ -234,7 +234,7 @@ public class State
             emptySpace = GetRandomSpace('e');
             obstacleSpace = GetRandomNeighbor(emptySpace, 'w');
         }
-        while (obstacleSpace != Vector2Int.zero);
+        while (obstacleSpace == Vector2Int.zero);
 
         // Remove obstacle from selected space
         boardState[obstacleSpace.x, obstacleSpace.y] = 'e';
@@ -338,7 +338,7 @@ public class State
 
     Vector2Int GetRandomSpace(char _spaceType)
     {
-        Vector2Int space;
+        Vector2Int space = new Vector2Int(0,0);
 
         // Generate random positions until space type matches
         do
