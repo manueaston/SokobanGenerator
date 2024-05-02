@@ -31,33 +31,28 @@ public class Node
 
     public void SearchTree()    // Called for root node, initial state of board
     {
-        Debug.Log("Searching Tree");
-
         LinkedList<Node> visitedNodes = new LinkedList<Node>();
         Node currentNode = this;
         visitedNodes.AddLast(currentNode);
 
         // Selection
-        while (currentNode.isVisited && currentNode.nodeState.saved != true)
+        while (currentNode.isVisited && !currentNode.nodeState.saved)
         {
-            Debug.Log("Searching");
             currentNode = currentNode.Select();
             visitedNodes.AddLast(currentNode);
         }
-        Debug.Log("Node Selected");
 
         // Expansion
         currentNode.Expand();
 
-        //// Evaluation
-        //float evaluationValue = currentNode.Evaluate();
+        // Evaluation
+        float evaluationValue = currentNode.Evaluate();
 
-        //// Backpropogation
-        //Debug.Log("Backpropogating");
-        //foreach (Node node in visitedNodes)
-        //{
-        //    node.UpdateNode(evaluationValue);
-        //}
+        // Backpropogation
+        foreach (Node node in visitedNodes)
+        {
+            node.UpdateNode(evaluationValue);
+        }
     }
 
     Node Select()
@@ -85,14 +80,17 @@ public class Node
 
     void Expand()   // Creates children nodes
     {
-        Debug.Log("Expanding Node");
-
         if (nodeState.frozen == false)
         {
-            Debug.Log("Node state is frozen");
             // Available actions: Delete obstacle, Place box, Freeze level
             AddChildNode(EActionType.DeleteObstacle);
-            AddChildNode(EActionType.PlaceBox);
+
+            if (true)   // Check if board has more than 1 space
+            {
+                // This is so the board can't be completely filled with no empty spaces
+                AddChildNode(EActionType.PlaceBox);
+            }
+            
             AddChildNode(EActionType.FreezeLevel);
 
         }
@@ -109,8 +107,6 @@ public class Node
         // Create child node
         // Create action links for child
 
-        Debug.Log("Adding child node");
-
         Node newChildNode = new Node(nodeState, levelGenerator);
 
         switch (_action)
@@ -124,7 +120,7 @@ public class Node
                 break;
 
             case EActionType.FreezeLevel:
-                //newChildNode.nodeState.frozen = true;
+                newChildNode.nodeState.frozen = true;
                 break;
 
             case EActionType.MoveAgent:
@@ -144,8 +140,6 @@ public class Node
 
     float Evaluate()
     {
-        Debug.Log("Evaluating Node");
-
         isVisited = true;
 
         // scaling weights
@@ -160,7 +154,6 @@ public class Node
         if (nodeState.saved == true)
         {
             levelGenerator.CreateLevel(nodeState);
-            Debug.Log("Node Saved as start layout");
         }
 
         return evaluationScoreSum;

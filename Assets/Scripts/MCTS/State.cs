@@ -141,21 +141,23 @@ public class State
         float[,] tilesInBlock = new float[height, width];
         // 1.0f = not in block, 0.0f = in block
 
-        for (int y = 0; y < height; y++)
+        // Initialise all values to 1
+        for (int i = 0; i < height; i++)
         {
-            for (int x = 0; x < width; x++)
+            for (int j = 0; j < width; j++)
             {
-                // Initialise tile value
-                tilesInBlock[y, x] = 1.0f;
+                tilesInBlock[i, j] = 1.0f;
+            }
+        }
 
-                if (y >= height - 2 || x >= width - 2)
-                {
-                    // Checks board starting from top left and moving to the right and down
-                    // Only checks a tile for 3x3 block if is the top left in block
-                    // Tiles in last 2 rows and columns cannot be this top left tile, and so are skipped over
-                    continue;
-                }
-
+        // Check if tiles are in 3x3 block
+        // If true, set value to 0
+        // Don't need to check last 2 rows and columns because we are only checking the top left tile of a 3x3 block
+        // Last 2 rows and columns cannot be the top left tile, there are not enough rows or columns after it
+        for (int y = 0; y < height - 2; y++)
+        {
+            for (int x = 0; x < width - 2; x++)
+            {
                 // Get tile type 
                 char tile = boardState[y + 1, x + 1];   // + 1 to avoid boarder tiles
 
@@ -166,14 +168,16 @@ public class State
                 }
 
                 bool inBlock = true;
-                for (int i = 1; i < 3; i++)
+                for (int i = 0; i < 3; i++)
                 {
-                    for (int j = 1; j < 3; j++)
+                    for (int j = 0; j < 3; j++)
                     {
                         // Checks tiles in 3x3 block
-                        // if not same tile as original tile, not in 3x3 block
+                        // if contains something other than empty space or obstacle, not in 3x3 block
 
-                        if (boardState[y + 1 + i, x + 1 + j] != tile)
+                        char neighbourTile = boardState[y + 1 + i, x + 1 + j];
+
+                        if (neighbourTile != 'e' && neighbourTile != 'w')
                         {
                             inBlock = false;
                             break;
@@ -186,14 +190,13 @@ public class State
 
                 if (inBlock)
                 {
-                    // Is in 3x3 block
-                    // Set tiles to true
+                    // Is in 3x3 block so these tiles do not count towards score
 
-                    for (int i = 1; i < 3; i++)
+                    for (int i = 0; i < 3; i++)
                     {
-                        for (int j = 1; j < 3; j++)
+                        for (int j = 0; j < 3; j++)
                         {
-                            tilesInBlock[y + i, x + j] = 0.0f;
+                            tilesInBlock[(y + i), (x + j)] = 0.0f;
                         }
                     }
                 }

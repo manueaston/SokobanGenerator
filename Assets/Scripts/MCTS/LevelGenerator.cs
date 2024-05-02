@@ -7,43 +7,67 @@ public class LevelGenerator : MonoBehaviour
 {
     static int levelWidth = 5;
     static int levelHeight = 5;
-    //float k = 1.0f;
 
     State initialBoard = new State();
+
+    Node rootNode;
+
+    bool running = false;
+    int totalIterations = 10;
+    int currentIteration = 1;
 
     public GameObject wall;
     public GameObject player;
     public GameObject box;
     public GameObject goal;
 
+
+    // TODO ////////
+    // Write check for placing box
+    // Check why it's always choosing evaluate level
+    ////////////////
+
+
     // Start is called before the first frame update
     void Start()
     {
         initialBoard.Initialise(levelWidth, levelHeight);
-        CreateLevel(initialBoard);
+
+        rootNode = new Node(initialBoard, this);
+        CreateLevel(rootNode.nodeState);
 
         StartMCTS();
     }
 
     void StartMCTS()
     {
-        Debug.Log("Start MCTS");
+        running = true;
+    }
 
-        Node rootNode = new Node(initialBoard, this);
-
-        CreateLevel(rootNode.nodeState);
-
-        int iterationNum = 1;
-
-        for (int i = 0; i < iterationNum; i++)
+    private void Update()
+    {
+        if (running)
         {
-           rootNode.SearchTree();
+            rootNode.SearchTree();
+            currentIteration++;
+
+            if (currentIteration > totalIterations)
+            {
+                Debug.Log("Finished");
+                running = false;
+            }   
         }
     }
-    
+
     public void CreateLevel(State _board)
     {
-        Debug.Log("Create Level");
+        Debug.Log("Creating saved level");
+
+        // Clear current level
+        foreach(Transform child in this.transform)
+        {
+            Destroy(child.gameObject);
+        }
 
         _board.ApplyPostProcessing();
 
@@ -61,16 +85,16 @@ public class LevelGenerator : MonoBehaviour
                 {
                     case 'w':
                     case 'o':
-                        Instantiate(wall, new Vector3(xPos, yPos, 0.0f), Quaternion.identity);
+                        Instantiate(wall, new Vector3(xPos, yPos, 0.0f), Quaternion.identity, this.transform);
                         break;
                     case 'p':
-                        Instantiate(player, new Vector3(xPos, yPos, 0.0f), Quaternion.identity);
+                        Instantiate(player, new Vector3(xPos, yPos, 0.0f), Quaternion.identity, this.transform);
                         break;
                     case 'b':
-                        Instantiate(box, new Vector3(xPos, yPos, 0.0f), Quaternion.identity);
+                        Instantiate(box, new Vector3(xPos, yPos, 0.0f), Quaternion.identity, this.transform);
                         break;
                     case 'g':
-                        Instantiate(goal, new Vector3(xPos, yPos, 0.0f), Quaternion.identity);
+                        Instantiate(goal, new Vector3(xPos, yPos, 0.0f), Quaternion.identity, this.transform);
                         break;
                     default:
                         break;
