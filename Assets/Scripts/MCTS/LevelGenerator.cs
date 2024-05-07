@@ -13,7 +13,7 @@ public class LevelGenerator : MonoBehaviour
     Node rootNode;
 
     bool running = false;
-    int totalIterations = 10;
+    int totalIterations = 100;
     int currentIteration = 1;
 
     public GameObject wall;
@@ -23,7 +23,6 @@ public class LevelGenerator : MonoBehaviour
 
 
     // TODO ////////
-    // Write check for placing box
     // Check why it's always choosing evaluate level
     ////////////////
 

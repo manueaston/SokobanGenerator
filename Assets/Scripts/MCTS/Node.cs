@@ -25,7 +25,7 @@ public class Node
 
     public Node(State _state, LevelGenerator _lg)
     {
-        nodeState = _state;
+        nodeState = new State(_state);
         levelGenerator = _lg;
     }
 
@@ -85,7 +85,7 @@ public class Node
             // Available actions: Delete obstacle, Place box, Freeze level
             AddChildNode(EActionType.DeleteObstacle);
 
-            if (true)   // Check if board has more than 1 space
+            if (nodeState.GetEmptyCount() > 10)   // Check if board has more than 1 space
             {
                 // This is so the board can't be completely filled with no empty spaces
                 AddChildNode(EActionType.PlaceBox);

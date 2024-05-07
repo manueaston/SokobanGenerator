@@ -33,8 +33,28 @@ public class State
     Vector2Int playerPos;
 
     int boxCount = 0;
-    List<Vector2Int> boxPos;
-    List<Vector2Int> boxStartPos;
+    int emptyCount = 1;
+    List<Vector2Int> boxPos = new List<Vector2Int>();
+    List<Vector2Int> boxStartPos = new List<Vector2Int>();
+
+    public State() { }
+
+    public State(State _copyState)
+    {
+        boardState = _copyState.boardState;
+        frozen = _copyState.frozen;
+        saved = _copyState.saved;
+
+        width = _copyState.width;
+        height = _copyState.height;
+
+        playerPos = _copyState.playerPos;
+
+        boxCount = _copyState.boxCount;
+        emptyCount = _copyState.emptyCount;
+        boxPos = new List<Vector2Int>(_copyState.boxPos);
+        boxStartPos = new List<Vector2Int>(_copyState.boxStartPos);
+    }
 
     public void Initialise(int _width, int _height)
     {
@@ -131,9 +151,14 @@ public class State
         return congestionScore;
     }
 
-    public float GetBoxCount()
+    public int GetBoxCount()
     {
         return boxCount;
+    }
+
+    public int GetEmptyCount()
+    {
+        return emptyCount;
     }
 
     public float Get3x3BlockCount()
@@ -241,6 +266,8 @@ public class State
 
         // Remove obstacle from selected space
         boardState[obstacleSpace.x, obstacleSpace.y] = 'e';
+
+        emptyCount++;
     }
 
     public void PlaceRandomBox()
@@ -254,6 +281,7 @@ public class State
         boxStartPos.Add(emptySpace);
 
         boxCount++;
+        emptyCount--;
     }
 
     public void MoveAgentRandomly()
@@ -331,6 +359,7 @@ public class State
 
                 // Clear from box lists
                 boxPos.RemoveAt(i);
+                boxStartPos.RemoveAt(i);
                 boxCount--;
 
                 // If box has been removed from list, index of other boxes has decreased
@@ -365,7 +394,6 @@ public class State
             if (boardState[neighbor.x, neighbor.y] == _spaceType)
                 validNeighbors.Add(neighbor);
         }
-
 
         if (validNeighbors.Count == 0)
             // No neighboring spaces of space type
@@ -440,15 +468,9 @@ public class State
     public void ApplyPostProcessing()
     {
         // Final box positions into goals
-        for (int i = 1; i <= height; i++)
+        for (int i = 0; i < boxCount; i++)
         {
-            for (int j = 1; j <= width; j++)
-            {
-                if (boardState[i, j] == 'b')
-                {
-                    boardState[i, j] = 'g';
-                }
-            }
+            boardState[boxPos[i].x, boxPos[i].y] = 'g';
         }
 
         // Starting box position into boxes
