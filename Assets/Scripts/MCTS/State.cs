@@ -23,12 +23,9 @@ enum Direction
 
 public class State
 {
-    public char[,] boardState;
+    public char[,] boardState = new char[Util.height, Util.width];
     public bool frozen = false;
     public bool saved = false;
-
-    int width;
-    int height;
 
     Vector2Int playerPos;
 
@@ -41,12 +38,8 @@ public class State
 
     public State(State _copyState)
     {
-        boardState = _copyState.boardState;
         frozen = _copyState.frozen;
         saved = _copyState.saved;
-
-        width = _copyState.width;
-        height = _copyState.height;
 
         playerPos = _copyState.playerPos;
 
@@ -54,27 +47,24 @@ public class State
         emptyCount = _copyState.emptyCount;
         boxPos = new List<Vector2Int>(_copyState.boxPos);
         boxStartPos = new List<Vector2Int>(_copyState.boxStartPos);
+
+        // Copy board values
+        for (int y = 0; y < Util.height; y++)
+        {
+            for (int x = 0; x < Util.width; x++)
+            {
+                boardState[y, x] = _copyState.boardState[y, x];
+            }
+        }
     }
 
-    public void Initialise(int _width, int _height)
+    public void Initialise()
     {
-        // Adds 2 more spaces in each direction for outer walls of level
-        // Also makes neighbour checking easier, can't go out of bounds
-        width = _width;
-        height = _height;
-
-        boardState = new char[_height + 2, _width + 2];
-
-        for (int i = 0; i < _height + 2; i++)
+        for (int i = 0; i < Util.height; i++)
         {
-            for (int j = 0; j < _width + 2; j++)
+            for (int j = 0; j < Util.width; j++)
             {
-                if (i == 0 || i == _height + 1 || j == 0 || j == _width + 1)
-                {
-                    // Outer walls around outside of board
-                    boardState[i, j] = 'o';
-                }
-                else if (i == (height + 1) / 2 && j == (width + 1) / 2)
+                if (i == (Util.height - 1) / 2 && j == (Util.width - 1) / 2)
                 {
                     // Centre of board starts as empty, will be player start position
                     boardState[i, j] = 'e';
@@ -163,13 +153,13 @@ public class State
 
     public float Get3x3BlockCount()
     {
-        float[,] tilesInBlock = new float[height, width];
+        float[,] tilesInBlock = new float[Util.height, Util.width];
         // 1.0f = not in block, 0.0f = in block
 
         // Initialise all values to 1
-        for (int i = 0; i < height; i++)
+        for (int i = 0; i < Util.height; i++)
         {
-            for (int j = 0; j < width; j++)
+            for (int j = 0; j < Util.width; j++)
             {
                 tilesInBlock[i, j] = 1.0f;
             }
@@ -179,12 +169,12 @@ public class State
         // If true, set value to 0
         // Don't need to check last 2 rows and columns because we are only checking the top left tile of a 3x3 block
         // Last 2 rows and columns cannot be the top left tile, there are not enough rows or columns after it
-        for (int y = 0; y < height - 2; y++)
+        for (int y = 0; y < Util.height - 2; y++)
         {
-            for (int x = 0; x < width - 2; x++)
+            for (int x = 0; x < Util.width - 2; x++)
             {
                 // Get tile type 
-                char tile = boardState[y + 1, x + 1];   // + 1 to avoid boarder tiles
+                char tile = boardState[y, x];
 
                 if (tile != 'e' && tile != 'w')
                 {
@@ -200,7 +190,7 @@ public class State
                         // Checks tiles in 3x3 block
                         // if contains something other than empty space or obstacle, not in 3x3 block
 
-                        char neighbourTile = boardState[y + 1 + i, x + 1 + j];
+                        char neighbourTile = boardState[y + i, x + j];
 
                         if (neighbourTile != 'e' && neighbourTile != 'w')
                         {
@@ -239,17 +229,17 @@ public class State
         return tileCount;
     }
 
-    float GetBoxStartPosInArea(Vector2 _areaStart, Vector2 _areaEnd)
-    {
-        float num = 0.0f;
+    //float GetBoxStartPosInArea(Vector2 _areaStart, Vector2 _areaEnd)
+    //{
+    //    float num = 0.0f;
 
-        foreach(Vector2 pos in boxStartPos)
-        {
-            // Figure out how to check if its in area
-        }
+    //    foreach(Vector2 pos in boxStartPos)
+    //    {
+    //        // Figure out how to check if its in area
+    //    }
 
-        return num;
-    }
+    //    return num;
+    //}
 
     public void DeleteRandomObstacle()
     {
@@ -262,7 +252,7 @@ public class State
             emptySpace = GetRandomSpace('e');
             obstacleSpace = GetRandomNeighbor(emptySpace, 'w');
         }
-        while (obstacleSpace == Vector2Int.zero);
+        while (obstacleSpace == Util.invalidPos);
 
         // Remove obstacle from selected space
         boardState[obstacleSpace.x, obstacleSpace.y] = 'e';
@@ -273,7 +263,12 @@ public class State
     public void PlaceRandomBox()
     {
         // Find random empty space and place box in space
-        Vector2Int emptySpace = GetRandomSpace('e');
+        Vector2Int emptySpace;
+        do
+        {
+            emptySpace = GetRandomSpace('e');
+        } while (emptySpace == playerPos);  // Finds new empty space if space found is player position
+
         boardState[emptySpace.x, emptySpace.y] = 'b';
 
         // Add position to box pos lists
@@ -282,6 +277,8 @@ public class State
 
         boxCount++;
         emptyCount--;
+
+        Debug.Log("Box Added at: " + emptySpace + ". Now " + boxCount + " boxes");
     }
 
     public void MoveAgentRandomly()
@@ -297,34 +294,37 @@ public class State
             // Get space in direction
             Vector2Int newSpace = GetSpace(playerPos, direction);
 
-            // Check if player can move to this space
-            if (boardState[newSpace.x, newSpace.y] == 'e')
+            if (newSpace != Util.invalidPos)
             {
-                // Can move to empty space
-                SwapSpaces(playerPos, newSpace);
-                playerPos = newSpace;
-                break;
-            }
-            else if (boardState[newSpace.x, newSpace.y] == 'b')
-            {
-                // Find where box will move
-                Vector2Int newBoxSpace = GetSpace(newSpace, direction);
-
-                // Check if box has empty space to be pushed into
-                if (boardState[newBoxSpace.x, newBoxSpace.y] == 'e')
+                // Check if player can move to this space
+                if (boardState[newSpace.x, newSpace.y] == 'e')
                 {
-                    // Can push box into empty space
-                    SwapSpaces(newSpace, newBoxSpace);
-                    SetBoxPos(newSpace, newBoxSpace);
+                    // Can move to empty space
                     SwapSpaces(playerPos, newSpace);
                     playerPos = newSpace;
                     break;
                 }
+                else if (boardState[newSpace.x, newSpace.y] == 'b')
+                {
+                    // Find where box will move
+                    Vector2Int newBoxSpace = GetSpace(newSpace, direction);
+
+                    // Check if box has empty space to be pushed into
+                    if (newBoxSpace != Util.invalidPos && boardState[newBoxSpace.x, newBoxSpace.y] == 'e')
+                    {
+                        // Can push box into empty space
+                        SwapSpaces(newSpace, newBoxSpace);
+                        SetBoxPos(newSpace, newBoxSpace);
+                        SwapSpaces(playerPos, newSpace);
+                        playerPos = newSpace;
+                        break;
+                    }
+                }
             }
 
-            // Space is not valid to move into
-            // Remove direction from list of possible directions
-            possibleDirections.RemoveAt(randomIndex);
+                // Space is not valid to move into
+                // Remove direction from list of possible directions
+                possibleDirections.RemoveAt(randomIndex);
 
             // Check if there are no valid directions in list
             if (possibleDirections.Count == 0)
@@ -375,9 +375,10 @@ public class State
         // Generate random positions until space type matches
         do
         {
-            space = new Vector2Int(Random.Range(1, height), Random.Range(1, width));
+            space = new Vector2Int(Random.Range(0, Util.height - 1), Random.Range(0, Util.width - 1));
         }
         while (boardState[space.x, space.y] != _spaceType);
+        // Finds space that is of correct type and not where player is
 
         return space;
     }
@@ -391,13 +392,16 @@ public class State
         {
             Vector2Int neighbor = GetSpace(_pos, direction);
 
-            if (boardState[neighbor.x, neighbor.y] == _spaceType)
-                validNeighbors.Add(neighbor);
+            if (neighbor != Util.invalidPos)    // Check space returned is valid
+            {
+                if (boardState[neighbor.x, neighbor.y] == _spaceType)
+                    validNeighbors.Add(neighbor);
+            }
         }
 
         if (validNeighbors.Count == 0)
             // No neighboring spaces of space type
-            return Vector2Int.zero;
+            return Util.invalidPos;
         else
             // Return random neigbor from valid neighbor list
             return validNeighbors[Random.Range(0, validNeighbors.Count - 1)];
@@ -412,13 +416,16 @@ public class State
         {
             Vector2Int neighbor = GetSpace(_pos, direction);
 
-            if (boardState[neighbor.x, neighbor.y] == _spaceType1 || boardState[neighbor.x, neighbor.y] == _spaceType2)
-                validNeighbors.Add(neighbor);
+            if (neighbor != Util.invalidPos)
+            {
+                if (boardState[neighbor.x, neighbor.y] == _spaceType1 || boardState[neighbor.x, neighbor.y] == _spaceType2)
+                    validNeighbors.Add(neighbor);
+            }
         }
 
         if (validNeighbors.Count == 0)
             // No neighboring spaces of space type
-            return Vector2Int.zero;
+            return Util.invalidPos;
         else
             // Return random neigbor from valid neighbor list
             return validNeighbors[Random.Range(0, validNeighbors.Count - 1)];
@@ -426,23 +433,37 @@ public class State
 
     Vector2Int GetSpace(Vector2Int _startPos, Direction _dir)
     {
+        Vector2Int space;
+
         switch (_dir)
         {
             case Direction.Up:
-                return new Vector2Int(_startPos.x - 1, _startPos.y);
+                space = new Vector2Int(_startPos.x - 1, _startPos.y);
+                break;
 
             case Direction.Down:
-                return new Vector2Int(_startPos.x + 1, _startPos.y);
+                space = new Vector2Int(_startPos.x + 1, _startPos.y);
+                break;
 
             case Direction.Left:
-                return new Vector2Int(_startPos.x, _startPos.y - 1);
+                space = new Vector2Int(_startPos.x, _startPos.y - 1);
+                break;
 
             case Direction.Right:
-                return new Vector2Int(_startPos.x, _startPos.y + 1);
+                space = new Vector2Int(_startPos.x, _startPos.y + 1);
+                break;
 
             default:
-                return new Vector2Int(_startPos.x, _startPos.y);
+                return Util.invalidPos;
         }
+
+        // Check if space is valid space
+        if (space.x < 0 || space.x >= Util.height || space.y < 0 || space.y >= Util.width)
+        {
+            return Util.invalidPos;
+        }
+
+        return space;
     }
 
     void SwapSpaces(Vector2Int _space1, Vector2Int _space2)
@@ -467,6 +488,8 @@ public class State
 
     public void ApplyPostProcessing()
     {
+        Debug.Log("Final box count: " + boxCount);
+
         // Final box positions into goals
         for (int i = 0; i < boxCount; i++)
         {

@@ -83,16 +83,23 @@ public class Node
         if (nodeState.frozen == false)
         {
             // Available actions: Delete obstacle, Place box, Freeze level
-            AddChildNode(EActionType.DeleteObstacle);
-
-            if (nodeState.GetEmptyCount() > 10)   // Check if board has more than 1 space
+            if ((nodeState.GetEmptyCount() + nodeState.GetBoxCount()) < Util.numSpaces)
             {
-                // This is so the board can't be completely filled with no empty spaces
+                // If there are any obstacles to delete
+                AddChildNode(EActionType.DeleteObstacle);
+            }
+
+            if (nodeState.GetEmptyCount() > 5)
+            {
+                // If there are enough spaces to place a box on
                 AddChildNode(EActionType.PlaceBox);
             }
             
-            AddChildNode(EActionType.FreezeLevel);
-
+            if (nodeState.GetBoxCount() > 0 && nodeState.GetEmptyCount() > 4)
+            {
+                // If there is at least one box and 4 spaces to move around in
+                AddChildNode(EActionType.FreezeLevel);
+            }
         }
         else if (nodeState.saved == false)
         {

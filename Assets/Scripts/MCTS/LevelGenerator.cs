@@ -5,15 +5,12 @@ using UnityEngine;
 
 public class LevelGenerator : MonoBehaviour
 {
-    static int levelWidth = 5;
-    static int levelHeight = 5;
-
     State initialBoard = new State();
 
     Node rootNode;
 
     bool running = false;
-    int totalIterations = 100;
+    int totalIterations = 10000;
     int currentIteration = 1;
 
     public GameObject wall;
@@ -30,7 +27,7 @@ public class LevelGenerator : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        initialBoard.Initialise(levelWidth, levelHeight);
+        initialBoard.Initialise();
 
         rootNode = new Node(initialBoard, this);
         CreateLevel(rootNode.nodeState);
@@ -70,15 +67,15 @@ public class LevelGenerator : MonoBehaviour
 
         _board.ApplyPostProcessing();
 
-        int xStartPos = -(levelWidth + 1) / 2;
-        int yStartPos = -(levelHeight + 1) / 2;
+        int xStartPos = -Util.width / 2;
+        int yStartPos = -Util.height / 2;
         int xPos = xStartPos;
         int yPos = yStartPos;
 
         // + 2 accounting for outer wall
-        for (int i = 0; i < levelHeight + 2; i++)
+        for (int i = 0; i < Util.height; i++)
         {
-            for (int j = 0; j < levelWidth + 2;  j++)
+            for (int j = 0; j < Util.width;  j++)
             {
                 switch(_board.boardState[i, j])
                 {
