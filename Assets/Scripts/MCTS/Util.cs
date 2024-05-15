@@ -16,5 +16,5 @@ public class Util : MonoBehaviour
 
     // invalidPos returned whenever a position is outside of the range of the board
     public static Vector2Int invalidPos = new Vector2Int(-1, -1);
-
+    public static int impossibleCount = 50; // Number of times loop will iterate before determining it is impossible
 }

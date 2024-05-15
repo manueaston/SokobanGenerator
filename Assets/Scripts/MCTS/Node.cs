@@ -23,10 +23,14 @@ public class Node
 
     public LevelGenerator levelGenerator;
 
-    public Node(State _state, LevelGenerator _lg)
+    // Debug Variable
+    EActionType action;
+
+    public Node(State _state, LevelGenerator _lg, EActionType _action)
     {
         nodeState = new State(_state);
         levelGenerator = _lg;
+        action = _action;
     }
 
     public void SearchTree()    // Called for root node, initial state of board
@@ -35,11 +39,24 @@ public class Node
         Node currentNode = this;
         visitedNodes.AddLast(currentNode);
 
+        int counter = 0;
+
         // Selection
-        while (currentNode.isVisited && !currentNode.nodeState.saved)
+        while (currentNode.isVisited)
         {
             currentNode = currentNode.Select();
             visitedNodes.AddLast(currentNode);
+
+            counter++;
+
+            if (currentNode.nodeState.saved)
+                break;
+
+            if (counter >= 100)
+            {
+                Debug.Log("Stuck in Selection loop");
+                break;
+            }
         }
 
         // Expansion
@@ -95,9 +112,9 @@ public class Node
                 AddChildNode(EActionType.PlaceBox);
             }
             
-            if (nodeState.GetBoxCount() > 0 && nodeState.GetEmptyCount() > 4)
+            if (nodeState.GetBoxCount() > 1 && nodeState.GetEmptyCount() > 6)
             {
-                // If there is at least one box and 4 spaces to move around in
+                // If there are at least two boxes and 6 spaces to move around in
                 AddChildNode(EActionType.FreezeLevel);
             }
         }
@@ -105,6 +122,8 @@ public class Node
         {
             // Available actions: Move agent, Evaluate level
             AddChildNode(EActionType.MoveAgent);
+
+
             AddChildNode(EActionType.EvaluateLevel);
         }
     }
@@ -114,24 +133,26 @@ public class Node
         // Create child node
         // Create action links for child
 
-        Node newChildNode = new Node(nodeState, levelGenerator);
+        Node newChildNode = new Node(nodeState, levelGenerator, _action);
+
+        bool childIsValid = true;
 
         switch (_action)
         {
             case EActionType.DeleteObstacle:
-                newChildNode.nodeState.DeleteRandomObstacle();
+                childIsValid = newChildNode.nodeState.DeleteRandomObstacle();
                 break;
 
             case EActionType.PlaceBox:
-                newChildNode.nodeState.PlaceRandomBox();
+                childIsValid = newChildNode.nodeState.PlaceRandomBox();
                 break;
 
             case EActionType.FreezeLevel:
-                newChildNode.nodeState.frozen = true;
+                childIsValid = newChildNode.nodeState.frozen = true;
                 break;
 
             case EActionType.MoveAgent:
-                newChildNode.nodeState.MoveAgentRandomly();
+                childIsValid = newChildNode.nodeState.MoveAgentRandomly();
                 break;
 
             case EActionType.EvaluateLevel:
@@ -142,7 +163,8 @@ public class Node
                 break;
         }
 
-        children.Add(newChildNode);
+        if (childIsValid)
+            children.Add(newChildNode);
     }
 
     float Evaluate()
@@ -156,14 +178,22 @@ public class Node
         // normalises score
         float k = 50.0f;
 
-        float evaluationScore =  ((b * nodeState.Get3x3BlockCount()) + (c * nodeState.GetCongestion()) + (n * nodeState.GetBoxCount())) / k;
+        float blockCount = nodeState.Get3x3BlockCount();
+        float congestion = nodeState.GetCongestion();
+        float boxCount = nodeState.GetBoxCount();
+
+        float evaluationScore =  ((b * blockCount) + (c * congestion) + (n * boxCount)) / k;
+
+        //Debug.Log("Block count = " + blockCount + ", Congestion = " + congestion + ", Box Count = " + boxCount);
 
         if (nodeState.saved == true)
         {
             levelGenerator.CreateLevel(nodeState);
         }
 
-        return evaluationScoreSum;
+        //Debug.Log("Action selected: " + action + " with score: " + evaluationScore);
+
+        return evaluationScore;
     }
 
     void UpdateNode(float _evalValue)
@@ -176,8 +206,6 @@ public class Node
 
     float GetUCB(float _parentVisitCount)
     {
-        // Check this /////
-
         // UCB(s) = w(PIs) + C * sqrt(lnpv / sv)
 
         if (visitCount == 0.0f)
@@ -187,8 +215,6 @@ public class Node
         }
 
         float UCB = (evaluationScoreSum / visitCount) + (Util.C * Mathf.Sqrt(Mathf.Log(_parentVisitCount) / visitCount));
-        // Figure out better way to get parent visit count
-        // Check for division by 0
 
         return UCB;
     }

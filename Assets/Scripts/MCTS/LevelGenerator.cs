@@ -10,7 +10,7 @@ public class LevelGenerator : MonoBehaviour
     Node rootNode;
 
     bool running = false;
-    int totalIterations = 10000;
+    int totalIterations = 100;
     int currentIteration = 1;
 
     public GameObject wall;
@@ -18,18 +18,12 @@ public class LevelGenerator : MonoBehaviour
     public GameObject box;
     public GameObject goal;
 
-
-    // TODO ////////
-    // Check why it's always choosing evaluate level
-    ////////////////
-
-
     // Start is called before the first frame update
     void Start()
     {
         initialBoard.Initialise();
 
-        rootNode = new Node(initialBoard, this);
+        rootNode = new Node(initialBoard, this, EActionType.EvaluateLevel);
         CreateLevel(rootNode.nodeState);
 
         StartMCTS();

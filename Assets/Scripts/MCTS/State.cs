@@ -99,8 +99,8 @@ public class State
             float wallCount = 0.0f;
 
             // Calculate area of bounding rectangle using box position and starting position
-            height = Mathf.Abs(boxPos[i].x - boxStartPos[i].x);
-            width = Mathf.Abs(boxPos[i].y - boxStartPos[i].y);
+            height = Mathf.Abs(boxPos[i].x - boxStartPos[i].x) + 1; // + 1 because always includes starting space
+            width = Mathf.Abs(boxPos[i].y - boxStartPos[i].y) + 1;
 
             for (int x = Mathf.Min(boxPos[i].x, boxStartPos[i].x); x <= Mathf.Max(boxPos[i].x, boxStartPos[i].x); x++)
             {
@@ -135,6 +135,9 @@ public class State
 
             // Add box congestion value to congestion score
             float area = width * height;
+
+            //Debug.Log("Start Count = " + startCount + ", Goal Count = " + goalCount + ", Area = " + area + ", Wall Count = " + wallCount);
+
             congestionScore += (((a * startCount) + (b * goalCount)) / (c * (area - wallCount)));
         }
 
@@ -241,16 +244,24 @@ public class State
     //    return num;
     //}
 
-    public void DeleteRandomObstacle()
+    public bool DeleteRandomObstacle()
     {
         Vector2Int emptySpace;
         Vector2Int obstacleSpace;
+
+        int counter = 0;
 
         // Find obstacle next to empty space
         do
         {
             emptySpace = GetRandomSpace('e');
             obstacleSpace = GetRandomNeighbor(emptySpace, 'w');
+
+            counter++;
+
+            if (counter >= Util.impossibleCount)
+                return false;
+            // Can't find obstacle to delete
         }
         while (obstacleSpace == Util.invalidPos);
 
@@ -258,15 +269,25 @@ public class State
         boardState[obstacleSpace.x, obstacleSpace.y] = 'e';
 
         emptyCount++;
+        return true;
     }
 
-    public void PlaceRandomBox()
+    public bool PlaceRandomBox()
     {
+        int counter = 0;
+
         // Find random empty space and place box in space
         Vector2Int emptySpace;
         do
         {
             emptySpace = GetRandomSpace('e');
+
+            counter++;
+
+            if (counter >= Util.impossibleCount)
+                return false;
+            // Can't find space to place box
+
         } while (emptySpace == playerPos);  // Finds new empty space if space found is player position
 
         boardState[emptySpace.x, emptySpace.y] = 'b';
@@ -277,13 +298,14 @@ public class State
 
         boxCount++;
         emptyCount--;
-
-        Debug.Log("Box Added at: " + emptySpace + ". Now " + boxCount + " boxes");
+        return true;
     }
 
-    public void MoveAgentRandomly()
+    public bool MoveAgentRandomly()
     {
         List<Direction> possibleDirections = new List<Direction> { Direction.Up, Direction.Down, Direction.Left, Direction.Right };
+
+        int counter = 0;
 
         while(true)
         {
@@ -322,9 +344,9 @@ public class State
                 }
             }
 
-                // Space is not valid to move into
-                // Remove direction from list of possible directions
-                possibleDirections.RemoveAt(randomIndex);
+            // Space is not valid to move into
+            // Remove direction from list of possible directions
+            possibleDirections.RemoveAt(randomIndex);
 
             // Check if there are no valid directions in list
             if (possibleDirections.Count == 0)
@@ -332,7 +354,15 @@ public class State
                 Debug.LogError("No valid moves for player");
                 break;
             }
+
+            counter++;
+
+            if (counter >= Util.impossibleCount)
+                return false;
+            // Can't find space to move player into
         }
+
+        return true;
     }
 
     public void Save()
@@ -349,7 +379,7 @@ public class State
                 if (boxPos[i] == boxStartPos[i])    // box hasn't moved at all
                 {
                     // Set space as wall
-                    boardState[boxPos[i].x, boxPos[i].y] = 'w';
+                    boardState[boxPos[i].x, boxPos[i].y] = 'e';
                 }
                 else   // box moved once
                 {
@@ -372,10 +402,20 @@ public class State
     {
         Vector2Int space = new Vector2Int(0,0);
 
+        int counter = 0;
+
         // Generate random positions until space type matches
         do
         {
-            space = new Vector2Int(Random.Range(0, Util.height - 1), Random.Range(0, Util.width - 1));
+            space = new Vector2Int(Random.Range(0, Util.height), Random.Range(0, Util.width));
+
+            counter++;
+
+            if (counter >= Util.impossibleCount)
+            {
+                Debug.Log("Stuck in GetRandomSpace loop");
+                break;
+            }
         }
         while (boardState[space.x, space.y] != _spaceType);
         // Finds space that is of correct type and not where player is
@@ -488,8 +528,6 @@ public class State
 
     public void ApplyPostProcessing()
     {
-        Debug.Log("Final box count: " + boxCount);
-
         // Final box positions into goals
         for (int i = 0; i < boxCount; i++)
         {
