@@ -13,7 +13,7 @@ public enum EActionType
 
 public class Node
 {
-    public State nodeState;     // Remove public    ////////////////////
+    public State nodeState;
 
     public float evaluationScoreSum = 0.0f;
     public float visitCount = 0.0f;
@@ -44,19 +44,18 @@ public class Node
         // Selection
         while (currentNode.isVisited)
         {
-            currentNode = currentNode.Select();
+            Node selectedChild = currentNode.Select();
+            if (selectedChild == null)
+                break;
+            // No possible actions from current Node
+
+            currentNode = selectedChild;
             visitedNodes.AddLast(currentNode);
 
             counter++;
 
             if (currentNode.nodeState.saved)
                 break;
-
-            if (counter >= 100)
-            {
-                Debug.Log("Stuck in Selection loop");
-                break;
-            }
         }
 
         // Expansion
@@ -79,7 +78,7 @@ public class Node
 
         foreach(Node child in children)
         {
-            float currentUCB = child.GetUCB(visitCount);
+            float currentUCB = GetUCB(child);
 
             if (currentUCB > highestUCB)
             {
@@ -135,7 +134,7 @@ public class Node
 
         Node newChildNode = new Node(nodeState, levelGenerator, _action);
 
-        bool childIsValid = true;
+        bool childIsValid = false;
 
         switch (_action)
         {
@@ -156,7 +155,7 @@ public class Node
                 break;
 
             case EActionType.EvaluateLevel:
-                newChildNode.nodeState.Save();
+                childIsValid = newChildNode.nodeState.Save();
                 break;
 
             default:
@@ -188,7 +187,7 @@ public class Node
 
         if (nodeState.saved == true)
         {
-            levelGenerator.CreateLevel(nodeState);
+            levelGenerator.SaveLevel(this);
         }
 
         //Debug.Log("Action selected: " + action + " with score: " + evaluationScore);
@@ -204,17 +203,19 @@ public class Node
         evaluationScoreSum += _evalValue;
     }
 
-    float GetUCB(float _parentVisitCount)
+    float GetUCB(Node child)
     {
         // UCB(s) = w(PIs) + C * sqrt(lnpv / sv)
 
-        if (visitCount == 0.0f)
+        if (child.visitCount == 0.0f)
         {
             // If child has never been visited, will choose this child
             return 10.0f;
         }
 
-        float UCB = (evaluationScoreSum / visitCount) + (Util.C * Mathf.Sqrt(Mathf.Log(_parentVisitCount) / visitCount));
+        float w = (evaluationScoreSum + (child.evaluationScoreSum / visitCount)) / (visitCount + 1);    // Average evaluation score including child node 
+
+        float UCB = w + (Util.C * Mathf.Sqrt(Mathf.Log(visitCount) / child.visitCount));
 
         return UCB;
     }

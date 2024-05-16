@@ -305,12 +305,12 @@ public class State
     {
         List<Direction> possibleDirections = new List<Direction> { Direction.Up, Direction.Down, Direction.Left, Direction.Right };
 
-        int counter = 0;
+        int initialDirectionCount = possibleDirections.Count;
 
-        while(true)
+        for (int i = 0; i < initialDirectionCount; i++)
         {
             // Choose random direction that hasn't been checked yet
-            int randomIndex = Random.Range(0, possibleDirections.Count - 1);
+            int randomIndex = Random.Range(0, possibleDirections.Count);
             Direction direction = possibleDirections[randomIndex];
 
             // Get space in direction
@@ -324,7 +324,7 @@ public class State
                     // Can move to empty space
                     SwapSpaces(playerPos, newSpace);
                     playerPos = newSpace;
-                    break;
+                    return true;
                 }
                 else if (boardState[newSpace.x, newSpace.y] == 'b')
                 {
@@ -339,33 +339,21 @@ public class State
                         SetBoxPos(newSpace, newBoxSpace);
                         SwapSpaces(playerPos, newSpace);
                         playerPos = newSpace;
-                        break;
+                        return true;
                     }
                 }
             }
-
+            
             // Space is not valid to move into
             // Remove direction from list of possible directions
             possibleDirections.RemoveAt(randomIndex);
-
-            // Check if there are no valid directions in list
-            if (possibleDirections.Count == 0)
-            {
-                Debug.LogError("No valid moves for player");
-                break;
-            }
-
-            counter++;
-
-            if (counter >= Util.impossibleCount)
-                return false;
-            // Can't find space to move player into
         }
 
-        return true;
+        // No valid directions to move player to
+        return false;
     }
 
-    public void Save()
+    public bool Save()
     {
         saved = true;
 
@@ -396,6 +384,9 @@ public class State
                 i--;
             }
         }
+
+        // Valid action if there are still boxes after post processing
+        return (boxCount > 0);
     }
 
     Vector2Int GetRandomSpace(char _spaceType)
@@ -444,7 +435,7 @@ public class State
             return Util.invalidPos;
         else
             // Return random neigbor from valid neighbor list
-            return validNeighbors[Random.Range(0, validNeighbors.Count - 1)];
+            return validNeighbors[Random.Range(0, validNeighbors.Count)];
     }
 
     Vector2Int GetRandomNeighbor(Vector2Int _pos, char _spaceType1, char _spaceType2)
@@ -468,7 +459,7 @@ public class State
             return Util.invalidPos;
         else
             // Return random neigbor from valid neighbor list
-            return validNeighbors[Random.Range(0, validNeighbors.Count - 1)];
+            return validNeighbors[Random.Range(0, validNeighbors.Count)];
     }
 
     Vector2Int GetSpace(Vector2Int _startPos, Direction _dir)
@@ -539,5 +530,8 @@ public class State
         {
             boardState[boxStartPos[i].x, boxStartPos[i].y] = 'b';
         }
+
+        // Player position set
+        boardState[(Util.height - 1) / 2, (Util.width - 1) / 2] = 'p';
     }
 }
