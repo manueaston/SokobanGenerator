@@ -5,6 +5,8 @@ using UnityEngine;
 
 public class LevelGenerator : MonoBehaviour
 {
+    HUD hud;
+
     State initialBoard = new State();
 
     Node rootNode;
@@ -13,6 +15,7 @@ public class LevelGenerator : MonoBehaviour
     bool running = false;
     int totalIterations = 10000;
     int currentIteration = 1;
+    float timeRunning = 0.0f;
 
     public GameObject wall;
     public GameObject player;
@@ -22,11 +25,13 @@ public class LevelGenerator : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        hud = FindObjectOfType<HUD>();
+
         initialBoard.Initialise();
 
         rootNode = new Node(initialBoard, this, EActionType.EvaluateLevel);
         savedNode = rootNode;
-        CreateLevel(rootNode.nodeState);
+        GenerateLevel(rootNode.nodeState);
 
         StartMCTS();
     }
@@ -34,6 +39,8 @@ public class LevelGenerator : MonoBehaviour
     void StartMCTS()
     {
         running = true;
+        timeRunning = 0.0f;
+        hud.SetGeneratingTextActive(true);
     }
 
     private void Update()
@@ -46,9 +53,13 @@ public class LevelGenerator : MonoBehaviour
             if (currentIteration > totalIterations)
             {
                 Debug.Log("Finished");
-                CreateLevel(savedNode.nodeState);
+                CreateFinalLevel(savedNode.nodeState);
                 running = false;
+                hud.SetGeneratingTextActive(false);
             }
+
+            timeRunning += Time.deltaTime;
+            hud.UpdateTimeElapsedText(timeRunning);
         }
     }
 
@@ -57,18 +68,23 @@ public class LevelGenerator : MonoBehaviour
         savedNode = _savedNode;
     }
 
-    public void CreateLevel(State _board)
+    public void CreateFinalLevel(State _board)
     {
         Debug.Log("Creating saved level");
 
         // Clear current level
-        foreach(Transform child in this.transform)
+        foreach (Transform child in this.transform)
         {
             Destroy(child.gameObject);
         }
 
         _board.ApplyPostProcessing();
 
+        GenerateLevel(_board);
+    }
+
+    public void GenerateLevel(State _board)
+    {
         int xStartPos = -Util.width / 2 - 1;
         int yStartPos = -Util.height / 2 - 1;
         int xPos = xStartPos;

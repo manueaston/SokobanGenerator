@@ -246,24 +246,24 @@ public class State
 
     public bool DeleteRandomObstacle()
     {
-        Vector2Int emptySpace;
-        Vector2Int obstacleSpace;
+        // Find obstacle next to empty space
+        Vector2Int emptySpace = GetRandomSpace('e', true);
+        if (emptySpace == Util.invalidPos)
+            return false;
+
+        Vector2Int obstacleSpace = GetRandomNeighbor(emptySpace, 'w');
 
         int counter = 0;
-
-        // Find obstacle next to empty space
-        do
+        while (obstacleSpace == Util.invalidPos)
         {
-            emptySpace = GetRandomSpace('e');
+            emptySpace = GetRandomSpace('e', true);
             obstacleSpace = GetRandomNeighbor(emptySpace, 'w');
 
             counter++;
 
             if (counter >= Util.impossibleCount)
                 return false;
-            // Can't find obstacle to delete
         }
-        while (obstacleSpace == Util.invalidPos);
 
         // Remove obstacle from selected space
         boardState[obstacleSpace.x, obstacleSpace.y] = 'e';
@@ -274,21 +274,10 @@ public class State
 
     public bool PlaceRandomBox()
     {
-        int counter = 0;
-
         // Find random empty space and place box in space
-        Vector2Int emptySpace;
-        do
-        {
-            emptySpace = GetRandomSpace('e');
-
-            counter++;
-
-            if (counter >= Util.impossibleCount)
-                return false;
-            // Can't find space to place box
-
-        } while (emptySpace == playerPos);  // Finds new empty space if space found is player position
+        Vector2Int emptySpace = GetRandomSpace('e');
+        if (emptySpace == Util.invalidPos)
+            return false;
 
         boardState[emptySpace.x, emptySpace.y] = 'b';
 
@@ -385,33 +374,29 @@ public class State
             }
         }
 
-        // Valid action if there are still boxes after post processing
+        // Valid action if there are at least 2 boxes after post processing
         return (boxCount > 0);
     }
 
-    Vector2Int GetRandomSpace(char _spaceType)
+    Vector2Int GetRandomSpace(char _spaceType, bool _canBePlayer = false)
     {
-        Vector2Int space = new Vector2Int(0,0);
-
-        int counter = 0;
-
-        // Generate random positions until space type matches
-        do
+        List<Vector2Int> possibleSpaces = new List<Vector2Int>();
+        for (int y = 0; y < Util.height; y++)
         {
-            space = new Vector2Int(Random.Range(0, Util.height), Random.Range(0, Util.width));
-
-            counter++;
-
-            if (counter >= Util.impossibleCount)
+            for (int x = 0; x < Util.width; x++)
             {
-                Debug.Log("Stuck in GetRandomSpace loop");
-                break;
+                Vector2Int position = new Vector2Int(y, x);
+                if (boardState[y,x] == _spaceType)
+                {
+                    possibleSpaces.Add(position);
+                }
             }
         }
-        while (boardState[space.x, space.y] != _spaceType);
-        // Finds space that is of correct type and not where player is
 
-        return space;
+        if (possibleSpaces.Count == 0)
+            return Util.invalidPos;
+
+        return possibleSpaces[Random.Range(0, possibleSpaces.Count)];
     }
 
     Vector2Int GetRandomNeighbor(Vector2Int _pos, char _spaceType)
