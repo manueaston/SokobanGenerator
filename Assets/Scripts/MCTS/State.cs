@@ -290,7 +290,7 @@ public class State
         return true;
     }
 
-    public bool MoveAgentRandomly()
+    public bool MoveAgentRandomly(int _moveNum = 1)
     {
         List<Direction> possibleDirections = new List<Direction> { Direction.Up, Direction.Down, Direction.Left, Direction.Right };
 
@@ -313,7 +313,20 @@ public class State
                     // Can move to empty space
                     SwapSpaces(playerPos, newSpace);
                     playerPos = newSpace;
+
                     return true;
+                    //if (_moveNum >= Util.impossibleCount)
+                    //{
+                    //    // Has moved 50 times
+                    //    Debug.Log("Reached max moves");
+                    //    // Return to avoid being stuck in loop
+                    //    return true;
+                    //}
+                    //else
+                    //{
+                    //    // Move again until box is pushed or reached max player moves
+                    //    return MoveAgentRandomly(_moveNum + 1);
+                    //}
                 }
                 else if (boardState[newSpace.x, newSpace.y] == 'b')
                 {
@@ -330,6 +343,9 @@ public class State
                             SetBoxPos(newSpace, newBoxSpace);
                             SwapSpaces(playerPos, newSpace);
                             playerPos = newSpace;
+
+                            // Has pushed box, changing board state
+                            // Can return
                             return true;
                         }
                     }
@@ -369,7 +385,7 @@ public class State
         }
 
         // Valid action if there are at least 2 boxes after post processing
-        return (boxCount > 0);      // TODO: up to 2
+        return (boxCount > 1);      // TODO: up to 2
     }
 
     Vector2Int GetRandomSpace(char _spaceType, bool _canBePlayer = false)
