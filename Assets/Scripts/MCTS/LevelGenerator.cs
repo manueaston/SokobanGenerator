@@ -41,26 +41,37 @@ public class LevelGenerator : MonoBehaviour
         running = true;
         timeRunning = 0.0f;
         hud.SetGeneratingTextActive(true);
+
+        for (int i = 0; i < totalIterations; i++)
+        {
+            rootNode.SearchTree();
+        }
+
+        CreateFinalLevel(savedNode.nodeState);
+        hud.SetGeneratingTextActive(false);
+
+        timeRunning += Time.deltaTime;
+        hud.UpdateTimeElapsedText(timeRunning);
     }
 
     private void Update()
     {
-        if (running)
-        {
-            rootNode.SearchTree();
-            currentIteration++;
+        //if (running)
+        //{
+        //    rootNode.SearchTree();
+        //    currentIteration++;
 
-            if (currentIteration > totalIterations)
-            {
-                Debug.Log("Finished");
-                CreateFinalLevel(savedNode.nodeState);
-                running = false;
-                hud.SetGeneratingTextActive(false);
-            }
+        //    if (currentIteration > totalIterations)
+        //    {
+        //        Debug.Log("Finished");
+        //        CreateFinalLevel(savedNode.nodeState);
+        //        running = false;
+        //        hud.SetGeneratingTextActive(false);
+        //    }
 
-            timeRunning += Time.deltaTime;
-            hud.UpdateTimeElapsedText(timeRunning);
-        }
+        //    timeRunning += Time.deltaTime;
+        //    hud.UpdateTimeElapsedText(timeRunning);
+        //}
     }
 
     public void SaveLevel(Node _savedNode)

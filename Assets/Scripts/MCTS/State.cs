@@ -321,14 +321,17 @@ public class State
                     Vector2Int newBoxSpace = GetSpace(newSpace, direction);
 
                     // Check if box has empty space to be pushed into
-                    if (newBoxSpace != Util.invalidPos && boardState[newBoxSpace.x, newBoxSpace.y] == 'e')
+                    if (newBoxSpace != Util.invalidPos)
                     {
-                        // Can push box into empty space
-                        SwapSpaces(newSpace, newBoxSpace);
-                        SetBoxPos(newSpace, newBoxSpace);
-                        SwapSpaces(playerPos, newSpace);
-                        playerPos = newSpace;
-                        return true;
+                        if (boardState[newBoxSpace.x, newBoxSpace.y] == 'e')
+                        {
+                            // Can push box into empty space
+                            SwapSpaces(newSpace, newBoxSpace);
+                            SetBoxPos(newSpace, newBoxSpace);
+                            SwapSpaces(playerPos, newSpace);
+                            playerPos = newSpace;
+                            return true;
+                        }
                     }
                 }
             }
@@ -353,16 +356,7 @@ public class State
         {
             if (Vector2Int.Distance(boxPos[i], boxStartPos[i]) <= 1)    // If box has moved less than 2 spaces
             {
-                if (boxPos[i] == boxStartPos[i])    // box hasn't moved at all
-                {
-                    // Set space as wall
-                    boardState[boxPos[i].x, boxPos[i].y] = 'e';
-                }
-                else   // box moved once
-                {
-                    // Set spaces as empty
-                    boardState[boxPos[i].x, boxPos[i].y] = 'e';
-                }
+                boardState[boxPos[i].x, boxPos[i].y] = 'e';
 
                 // Clear from box lists
                 boxPos.RemoveAt(i);
@@ -375,7 +369,7 @@ public class State
         }
 
         // Valid action if there are at least 2 boxes after post processing
-        return (boxCount > 0);
+        return (boxCount > 0);      // TODO: up to 2
     }
 
     Vector2Int GetRandomSpace(char _spaceType, bool _canBePlayer = false)
@@ -385,6 +379,9 @@ public class State
         {
             for (int x = 0; x < Util.width; x++)
             {
+                if (x == ((Util.width - 1) / 2) && y == ((Util.height - 1) / 2) && !_canBePlayer)   // Starting position of player is in centre of board
+                    continue;                                                                       // Don't want to place a box in the starting position of player
+
                 Vector2Int position = new Vector2Int(y, x);
                 if (boardState[y,x] == _spaceType)
                 {
