@@ -21,7 +21,7 @@ public class Player : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        CheckResetLevel();
+        CheckRegenerateLevel();
 
         if (levelWon)
             return;
@@ -81,9 +81,9 @@ public class Player : MonoBehaviour
         transform.position += moveDir;
     }
 
-    void CheckResetLevel()
+    void CheckRegenerateLevel()
     {
-        if (Input.GetKeyDown(KeyCode.R))
+        if (Input.GetKeyDown(KeyCode.G))
         {
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }

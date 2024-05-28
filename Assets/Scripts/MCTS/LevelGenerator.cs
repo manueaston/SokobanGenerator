@@ -6,6 +6,7 @@ using UnityEngine;
 public class LevelGenerator : MonoBehaviour
 {
     HUD hud;
+    GameManager gameManager;
 
     State initialBoard = new State();
 
@@ -25,6 +26,7 @@ public class LevelGenerator : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        gameManager = FindObjectOfType<GameManager>();
         hud = FindObjectOfType<HUD>();
 
         initialBoard.Initialise();
@@ -33,14 +35,17 @@ public class LevelGenerator : MonoBehaviour
         savedNode = rootNode;
         GenerateLevel(rootNode.nodeState);
 
-        StartMCTS();
+        StartCoroutine(StartMCTS());
     }
 
-    void StartMCTS()
+    IEnumerator StartMCTS()
     {
         running = true;
         timeRunning = 0.0f;
         hud.SetGeneratingTextActive(true);
+
+        // Wait for next frame
+        yield return 0;
 
         for (int i = 0; i < totalIterations; i++)
         {
@@ -48,30 +53,14 @@ public class LevelGenerator : MonoBehaviour
         }
 
         CreateFinalLevel(savedNode.nodeState);
-        hud.SetGeneratingTextActive(false);
-
-        timeRunning += Time.deltaTime;
-        hud.UpdateTimeElapsedText(timeRunning);
     }
 
     private void Update()
     {
-        //if (running)
-        //{
-        //    rootNode.SearchTree();
-        //    currentIteration++;
-
-        //    if (currentIteration > totalIterations)
-        //    {
-        //        Debug.Log("Finished");
-        //        CreateFinalLevel(savedNode.nodeState);
-        //        running = false;
-        //        hud.SetGeneratingTextActive(false);
-        //    }
-
-        //    timeRunning += Time.deltaTime;
-        //    hud.UpdateTimeElapsedText(timeRunning);
-        //}
+        if (!running)
+        {
+            CheckResetLevel();
+        }
     }
 
     public void SaveLevel(Node _savedNode)
@@ -92,6 +81,22 @@ public class LevelGenerator : MonoBehaviour
         _board.ApplyPostProcessing();
 
         GenerateLevel(_board);
+        running = false;
+        timeRunning += Time.deltaTime;
+
+        gameManager.FinishedGenerating(timeRunning, savedNode.nodeState.GetBoxCount());
+    }
+
+    void ResetLevel()
+    {
+        // Clear current level
+        foreach (Transform child in this.transform)
+        {
+            Destroy(child.gameObject);
+        }
+
+        // Regenerate level
+        GenerateLevel(savedNode.nodeState);
     }
 
     public void GenerateLevel(State _board)
@@ -140,4 +145,15 @@ public class LevelGenerator : MonoBehaviour
             xPos = xStartPos;
         }
     }
+
+    void CheckResetLevel()
+    {
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            ResetLevel();
+            gameManager.ResetLevel();
+        }
+    }
 }
+
+

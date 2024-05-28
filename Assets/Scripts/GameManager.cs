@@ -9,17 +9,11 @@ public class GameManager : MonoBehaviour
     bool levelWon = false;
 
     HUD hud;
-    Box[] boxes;
 
     // Start is called before the first frame update
     void Start()
     {
         hud = FindObjectOfType<HUD>();
-
-        boxes = FindObjectsOfType<Box>();
-        numBoxes = boxes.Length;
-
-        hud.UpdateBoxScore(numBoxes, boxesAtGoal);
     }
 
     public void UpdateBoxes(bool _boxAtGoal)
@@ -32,6 +26,23 @@ public class GameManager : MonoBehaviour
             levelWon = true;
             hud.UpdateLevelWon(true);
         }  
+    }
+
+    public void FinishedGenerating(float _timeRunning, int _numBoxes)
+    {
+        hud.SetGeneratingTextActive(false);
+        hud.UpdateTimeElapsedText(_timeRunning);
+
+        numBoxes = _numBoxes;
+        hud.UpdateBoxScore(numBoxes, 0);
+    }
+
+    public void ResetLevel()
+    {
+        levelWon = false;
+        boxesAtGoal = 0;
+        hud.UpdateLevelWon(false);
+        hud.UpdateBoxScore(numBoxes, 0);
     }
 
     public bool GetLevelWon()
