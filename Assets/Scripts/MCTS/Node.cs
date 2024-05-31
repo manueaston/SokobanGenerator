@@ -111,9 +111,9 @@ public class Node
                 AddChildNode(EActionType.PlaceBox);
             }
             
-            if (nodeState.GetBoxCount() > 1 && nodeState.GetEmptyCount() > 6)
+            if (nodeState.GetBoxCount() > 5 && nodeState.GetEmptyCount() > 9)
             {
-                // If there are at least two boxes and 6 spaces to move around in
+                // If there are at least six boxes and 10 spaces to move around in
                 AddChildNode(EActionType.FreezeLevel);
             }
         }

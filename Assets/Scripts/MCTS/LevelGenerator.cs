@@ -14,9 +14,10 @@ public class LevelGenerator : MonoBehaviour
     Node savedNode;
 
     bool running = false;
-    int totalIterations = 10000;
+    int totalIterations = 500000;
     int currentIteration = 1;
-    float timeRunning = 0.0f;
+    public float secondsToRun = 80.0f;
+    float startTime = 0.0f;
 
     public GameObject wall;
     public GameObject player;
@@ -41,13 +42,18 @@ public class LevelGenerator : MonoBehaviour
     IEnumerator StartMCTS()
     {
         running = true;
-        timeRunning = 0.0f;
+        startTime = Time.realtimeSinceStartup;
         hud.SetGeneratingTextActive(true);
 
         // Wait for next frame
         yield return 0;
 
-        for (int i = 0; i < totalIterations; i++)
+        //for (int i = 0; i < totalIterations; i++)
+        //{
+        //    rootNode.SearchTree();
+        //}
+
+        while (Time.realtimeSinceStartup - startTime < secondsToRun)
         {
             rootNode.SearchTree();
         }
@@ -70,7 +76,7 @@ public class LevelGenerator : MonoBehaviour
 
     public void CreateFinalLevel(State _board)
     {
-        Debug.Log("Creating saved level");
+        Debug.Log("Final evalution score = " + (savedNode.evaluationScoreSum / savedNode.visitCount));
 
         // Clear current level
         foreach (Transform child in this.transform)
@@ -82,9 +88,8 @@ public class LevelGenerator : MonoBehaviour
 
         GenerateLevel(_board);
         running = false;
-        timeRunning += Time.deltaTime;
 
-        gameManager.FinishedGenerating(timeRunning, savedNode.nodeState.GetBoxCount());
+        gameManager.FinishedGenerating(secondsToRun, savedNode.nodeState.GetBoxCount());
     }
 
     void ResetLevel()
