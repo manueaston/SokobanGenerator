@@ -31,7 +31,7 @@ public class State
     Vector2Int playerPos;
 
     int boxCount = 0;
-    int emptyCount = 1;
+    int emptyCount = 0;
     List<Vector2Int> boxPos = new List<Vector2Int>();
     List<Vector2Int> boxStartPos = new List<Vector2Int>();
 
@@ -122,14 +122,9 @@ public class State
                     {
                         wallCount++;
                     }
-
-                    foreach (Vector2Int pos in boxStartPos)     // check if tile is a box start position
+                    else if (IsBoxStartPos(tilePos))
                     {
-                        if (tilePos == pos)
-                        {
-                            startCount++;
-                            break;
-                        }
+                        startCount++;
                     }
                 }
             }
@@ -143,6 +138,17 @@ public class State
         }
 
         return congestionScore;
+    }
+
+    public bool IsBoxStartPos(Vector2Int _position)
+    {
+        foreach (Vector2Int boxPos in boxStartPos)
+        {
+            if (boxPos == _position)
+                return true;
+        }
+
+        return false;
     }
 
     public int GetBoxCount()
@@ -201,6 +207,11 @@ public class State
                             inBlock = false;
                             break;
                         }
+                        else if (IsBoxStartPos(new Vector2Int(y + i, x + j)))
+                        {
+                            inBlock = false;
+                            break;
+                        }
                     }
 
                     if (!inBlock)
@@ -230,7 +241,7 @@ public class State
             tileCount += tile;
         }
 
-        return tileCount;
+        return (tileCount / (Util.width * Util.height));
     }
 
     public bool DeleteRandomObstacle()
@@ -378,8 +389,8 @@ public class State
             }
         }
 
-        // Valid action if there are at least 3 boxes after post processing
-        return (boxCount > 2);   
+        // Valid action if there is at least 1 box after post processing
+        return (boxCount > 0);
     }
 
     Vector2Int GetRandomSpace(char _spaceType, bool _canBePlayer = false)

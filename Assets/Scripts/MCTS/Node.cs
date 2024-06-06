@@ -17,6 +17,7 @@ public class Node
 
     public float evaluationScoreSum = 0.0f;
     public float visitCount = 0.0f;
+    public List<float> evaluationScores = new List<float>();
 
     public List<Node> children = new List<Node>();
     bool isVisited = false;
@@ -59,7 +60,8 @@ public class Node
         }
 
         // Expansion
-        currentNode.Expand();
+        if (!currentNode.nodeState.saved)
+            currentNode.Expand();
 
         // Evaluation
         float evaluationValue = currentNode.Evaluate();
@@ -105,15 +107,15 @@ public class Node
                 AddChildNode(EActionType.DeleteObstacle);
             }
 
-            if (nodeState.GetEmptyCount() > 5)
+            if (nodeState.GetEmptyCount() > 0)
             {
-                // If there are enough spaces to place a box on
+                // If there is an empty space to place a box in
                 AddChildNode(EActionType.PlaceBox);
             }
             
-            if (nodeState.GetBoxCount() > 5 && nodeState.GetEmptyCount() > 9)
+            if (nodeState.GetBoxCount() > 0 && nodeState.GetEmptyCount() > 1)
             {
-                // If there are at least six boxes and 10 spaces to move around in
+                // If there are at least 1 box and 2 spaces to move around in
                 AddChildNode(EActionType.FreezeLevel);
             }
         }
@@ -121,8 +123,6 @@ public class Node
         {
             // Available actions: Move agent, Evaluate level
             AddChildNode(EActionType.MoveAgent);
-
-
             AddChildNode(EActionType.EvaluateLevel);
         }
     }
@@ -201,22 +201,35 @@ public class Node
 
         visitCount++;
         evaluationScoreSum += _evalValue;
+
+        evaluationScores.Add(_evalValue);
     }
 
     float GetUCB(Node child)
     {
         // UCB(s) = w(PIs) + C * sqrt(lnpv / sv)
 
-        if (child.visitCount == 0.0f)
+        if (!child.isVisited)
         {
             // If child has never been visited, will choose this child
             return 10.0f;
         }
 
-        float w = (evaluationScoreSum + (child.evaluationScoreSum / visitCount)) / (visitCount + 1);    // Average evaluation score including child node 
+        float w = (evaluationScoreSum + child.GetAverageEvaluationScore()) / (visitCount + 1);    // Average evaluation score including child node 
+        float v = (Util.C * Mathf.Sqrt(Mathf.Log(visitCount) / child.visitCount));
 
-        float UCB = w + (Util.C * Mathf.Sqrt(Mathf.Log(visitCount) / child.visitCount));
+        float UCB = w + v;
+
+       // Debug.Log("w " + w + ", v = " + v);
 
         return UCB;
+    }
+
+    public float GetAverageEvaluationScore()
+    {
+        if (visitCount == 0)
+            return 0.0f;
+        else
+            return (evaluationScoreSum / visitCount);
     }
 }

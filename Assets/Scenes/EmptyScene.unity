@@ -511,6 +511,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 336782312228923481, guid: cf4b02aadba6f6c4f902010376a44be2, type: 3}
+      propertyPath: secondsToRun
+      value: 120
+      objectReference: {fileID: 0}
     - target: {fileID: 3454368735460129791, guid: cf4b02aadba6f6c4f902010376a44be2, type: 3}
       propertyPath: m_Name
       value: LevelGenerator

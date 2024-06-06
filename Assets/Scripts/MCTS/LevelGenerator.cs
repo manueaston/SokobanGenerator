@@ -16,7 +16,7 @@ public class LevelGenerator : MonoBehaviour
     bool running = false;
     int totalIterations = 500000;
     int currentIteration = 1;
-    public float secondsToRun = 80.0f;
+    public float secondsToRun = 10.0f;
     float startTime = 0.0f;
 
     public GameObject wall;
@@ -76,7 +76,7 @@ public class LevelGenerator : MonoBehaviour
 
     public void CreateFinalLevel(State _board)
     {
-        Debug.Log("Final evalution score = " + (savedNode.evaluationScoreSum / savedNode.visitCount));
+        Debug.Log("Final evalution score = " + savedNode.GetAverageEvaluationScore());
 
         // Clear current level
         foreach (Transform child in this.transform)
