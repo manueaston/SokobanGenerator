@@ -32,7 +32,7 @@ public class LevelGenerator : MonoBehaviour
 
         initialBoard.Initialise();
 
-        rootNode = new Node(initialBoard, this, EActionType.EvaluateLevel);
+        rootNode = new Node(initialBoard, this);
         savedNode = rootNode;
         GenerateLevel(rootNode.nodeState);
 

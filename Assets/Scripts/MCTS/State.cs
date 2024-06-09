@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 //////////
-// 
-//  o = outerWall
+//
 //  w = wall
 //  p = player
 //  b = box
@@ -13,13 +12,12 @@ using UnityEngine;
 //
 //////////
 
-enum Direction
+public enum Direction
 {
     Up,
     Down,
     Left,
-    Right,
-    NoDirection,
+    Right
 }
 
 public class State
@@ -56,6 +54,39 @@ public class State
             {
                 boardState[y, x] = _copyState.boardState[y, x];
             }
+        }
+    }
+
+    // Indexer overrides
+    public char this[int y, int x]
+    {
+        // using get accessor 
+        get
+        {
+            char temp = boardState[y, x];
+            return temp;
+        }
+
+        // using set accessor 
+        set
+        {
+            boardState[y, x] = value;
+        }
+    }
+
+    public char this[Vector2Int _pos]
+    {
+        // using get accessor 
+        get
+        {
+            char temp = boardState[_pos.x, _pos.y];
+            return temp;
+        }
+
+        // using set accessor 
+        set
+        {
+            boardState[_pos.x, _pos.y] = value;
         }
     }
 
@@ -140,11 +171,11 @@ public class State
         return congestionScore;
     }
 
-    public bool IsBoxStartPos(Vector2Int _position)
+    public bool IsBoxStartPos(Vector2Int _pos)
     {
         foreach (Vector2Int boxPos in boxStartPos)
         {
-            if (boxPos == _position)
+            if (boxPos == _pos)
                 return true;
         }
 
@@ -244,124 +275,105 @@ public class State
         return (tileCount / (Util.width * Util.height));
     }
 
-    public bool DeleteRandomObstacle()
+    public bool HasNeighbour(int y, int x, char _tile)
     {
-        // Find obstacle next to empty space
-        Vector2Int emptySpace = GetRandomSpace('e', true);
-        if (emptySpace == Util.invalidPos)
-            return false;
+        if (y > 0 && boardState[y - 1, x] == _tile)
+            return true;
+        if (y < (Util.height - 1) && boardState[y + 1, x] == _tile)
+            return true;
+        if (x > 0 && boardState[y, x - 1] == _tile)
+            return true;
+        if (x < (Util.width - 1) && boardState[y, x + 1] == _tile)
+            return true;
 
-        Vector2Int obstacleSpace = GetRandomNeighbor(emptySpace, 'w');
+        return false;
+    }
 
-        int counter = 0;
-        while (obstacleSpace == Util.invalidPos)
+    public State DeleteObstacle(int y, int x)
+    {
+        if (boardState[y, x] == 'w' && HasNeighbour(y, x, 'e'))
         {
-            emptySpace = GetRandomSpace('e', true);
-            obstacleSpace = GetRandomNeighbor(emptySpace, 'w');
+            State newState = new State(this);
+            newState[y, x] = 'e';
+            newState.emptyCount++;
 
-            counter++;
-
-            if (counter >= Util.impossibleCount)
-                return false;
+            return newState;
         }
 
-        // Remove obstacle from selected space
-        boardState[obstacleSpace.x, obstacleSpace.y] = 'e';
-
-        emptyCount++;
-        return true;
+        return null;
     }
 
-    public bool PlaceRandomBox()
+    public State PlaceBox(int y, int x)
     {
-        // Find random empty space and place box in space
-        Vector2Int emptySpace = GetRandomSpace('e');
-        if (emptySpace == Util.invalidPos)
-            return false;
-
-        boardState[emptySpace.x, emptySpace.y] = 'b';
-
-        // Add position to box pos lists
-        boxPos.Add(emptySpace);
-        boxStartPos.Add(emptySpace);
-
-        boxCount++;
-        emptyCount--;
-        return true;
-    }
-
-    public bool MoveAgentRandomly(int _moveNum = 1)
-    {
-        Direction lastDirection = Direction.NoDirection;
-
-        for (int i = 0; i < Util.impossibleCount; i++)
+        if (boardState[y, x] == 'e' && !PlayerSpace(y, x))
         {
-            List<Direction> possibleDirections = new List<Direction> { Direction.Up, Direction.Down, Direction.Left, Direction.Right };
+            State newState = new State(this);
+            newState[y, x] = 'b';
 
-            for (int j = 0; j < 4; j++)
+            // Add position to box pos lists
+            newState.boxPos.Add(new Vector2Int(y, x));
+            newState.boxStartPos.Add(new Vector2Int(y, x));
+
+            newState.boxCount++;
+            newState.emptyCount--;
+
+            return newState;
+        }
+
+        return null;
+    }
+
+    public State MoveAgent(Direction _dir)
+    {
+        Vector2Int newSpace = GetSpace(playerPos, _dir);
+
+        if (newSpace != Util.invalidPos)
+        {
+            if (this[newSpace] == 'e')
             {
-                // Choose random direction that hasn't been checked yet
-                int randomIndex = Random.Range(0, possibleDirections.Count);
-                Direction direction = possibleDirections[randomIndex];
+                State newState = new State(this);
+                newState.playerPos = newSpace;
 
-                if (direction != lastDirection)
+                return newState;
+            }
+            else if (this[newSpace] == 'b')
+            {
+                Vector2Int newBoxSpace = GetSpace(newSpace, _dir);
+
+                if (newBoxSpace != Util.invalidPos && this[newBoxSpace] == 'e')
                 {
-                    // Get space in direction
-                    Vector2Int newSpace = GetSpace(playerPos, direction);
+                    State newState = new State(this);
 
-                    if (newSpace != Util.invalidPos)
-                    {
-                        // Check if player can move to this space
-                        if (boardState[newSpace.x, newSpace.y] == 'e')
-                        {
-                            // Can move to empty space
-                            SwapSpaces(playerPos, newSpace);
-                            playerPos = newSpace;
+                    // Can push box into empty space
+                    newState.SwapSpaces(newSpace, newBoxSpace);
+                    newState.SetBoxPos(newSpace, newBoxSpace);
+                    newState.playerPos = newSpace;
 
-                            // Save last direction moved and repeat loop to move again until pushes box
-                            lastDirection = direction;
-                            break;
-                        }
-                        else if (boardState[newSpace.x, newSpace.y] == 'b')
-                        {
-                            // Find where box will move
-                            Vector2Int newBoxSpace = GetSpace(newSpace, direction);
-
-                            // Check if box has empty space to be pushed into
-                            if (newBoxSpace != Util.invalidPos)
-                            {
-                                if (boardState[newBoxSpace.x, newBoxSpace.y] == 'e')
-                                {
-                                    // Can push box into empty space
-                                    SwapSpaces(newSpace, newBoxSpace);
-                                    SetBoxPos(newSpace, newBoxSpace);
-                                    SwapSpaces(playerPos, newSpace);
-                                    playerPos = newSpace;
-
-                                    // Has pushed box, changing board state
-                                    // Can return
-                                    return true;
-                                }
-                            }
-                        }
-
-
-                    }
+                    return newState;
                 }
-
-                // Space is not valid to move into
-                // Remove direction from list of possible directions
-                possibleDirections.RemoveAt(randomIndex);
             }
         }
-        
-        return true;
+
+        return null;
     }
 
-    public bool Save()
+    public State SaveLevel()
     {
-        saved = true;
+        State newState = new State(this);
 
+        if (newState.RemoveSlowBoxes())
+        {
+            saved = true;
+            return newState;
+        }
+        else
+        {
+            return null;
+        }
+    }
+
+    bool RemoveSlowBoxes()
+    {
         // Replace boxes that have never been pushed with obstacles
         // Replace boxes that have only been pushed once with empty spaces
 
@@ -372,11 +384,12 @@ public class State
                 if (boxPos[i] == boxStartPos[i])
                 {
                     // Box hasn't moved at all
-                    boardState[boxPos[i].x, boxPos[i].y] = 'w';
+                    this[boxPos[i]] = 'w';
                 }
                 else
                 {
-                    boardState[boxPos[i].x, boxPos[i].y] = 'e';
+                    // Box has moved one space
+                    this[boxPos[i]] = 'e';
                 }
 
                 // Clear from box lists
@@ -391,78 +404,6 @@ public class State
 
         // Valid action if there is at least 1 box after post processing
         return (boxCount > 0);
-    }
-
-    Vector2Int GetRandomSpace(char _spaceType, bool _canBePlayer = false)
-    {
-        List<Vector2Int> possibleSpaces = new List<Vector2Int>();
-        for (int y = 0; y < Util.height; y++)
-        {
-            for (int x = 0; x < Util.width; x++)
-            {
-                if (x == ((Util.width - 1) / 2) && y == ((Util.height - 1) / 2) && !_canBePlayer)   // Starting position of player is in centre of board
-                    continue;                                                                       // Don't want to place a box in the starting position of player
-
-                Vector2Int position = new Vector2Int(y, x);
-                if (boardState[y,x] == _spaceType)
-                {
-                    possibleSpaces.Add(position);
-                }
-            }
-        }
-
-        if (possibleSpaces.Count == 0)
-            return Util.invalidPos;
-
-        return possibleSpaces[Random.Range(0, possibleSpaces.Count)];
-    }
-
-    Vector2Int GetRandomNeighbor(Vector2Int _pos, char _spaceType)
-    {
-        List<Vector2Int> validNeighbors = new List<Vector2Int>();
-
-        // Add to list all neighbors that have matching space type
-        foreach (Direction direction in System.Enum.GetValues(typeof(Direction)))
-        {
-            Vector2Int neighbor = GetSpace(_pos, direction);
-
-            if (neighbor != Util.invalidPos)    // Check space returned is valid
-            {
-                if (boardState[neighbor.x, neighbor.y] == _spaceType)
-                    validNeighbors.Add(neighbor);
-            }
-        }
-
-        if (validNeighbors.Count == 0)
-            // No neighboring spaces of space type
-            return Util.invalidPos;
-        else
-            // Return random neigbor from valid neighbor list
-            return validNeighbors[Random.Range(0, validNeighbors.Count)];
-    }
-
-    Vector2Int GetRandomNeighbor(Vector2Int _pos, char _spaceType1, char _spaceType2)
-    {
-        List<Vector2Int> validNeighbors = new List<Vector2Int>();
-
-        // Add to list all neighbors that have matching space type
-        foreach (Direction direction in System.Enum.GetValues(typeof(Direction)))
-        {
-            Vector2Int neighbor = GetSpace(_pos, direction);
-
-            if (neighbor != Util.invalidPos)
-            {
-                if (boardState[neighbor.x, neighbor.y] == _spaceType1 || boardState[neighbor.x, neighbor.y] == _spaceType2)
-                    validNeighbors.Add(neighbor);
-            }
-        }
-
-        if (validNeighbors.Count == 0)
-            // No neighboring spaces of space type
-            return Util.invalidPos;
-        else
-            // Return random neigbor from valid neighbor list
-            return validNeighbors[Random.Range(0, validNeighbors.Count)];
     }
 
     Vector2Int GetSpace(Vector2Int _startPos, Direction _dir)
@@ -503,9 +444,9 @@ public class State
     void SwapSpaces(Vector2Int _space1, Vector2Int _space2)
     {
         // Swaps values of two spaces
-        char space1Value = boardState[_space1.x, _space1.y];
-        boardState[_space1.x, _space1.y] = boardState[_space2.x, _space2.y];
-        boardState[_space2.x, _space2.y] = space1Value;
+        char space1Value = this[_space1];
+        this[_space1] = this[_space2];
+        this[_space2] = space1Value;
     }
 
     void SetBoxPos(Vector2Int _oldPos, Vector2Int _newPos)
@@ -518,6 +459,12 @@ public class State
                 break;
             }
         }
+    }
+
+    bool PlayerSpace(int y, int x)
+    {
+        // x and y are backwards in Vector2Int
+        return (playerPos.x == y && playerPos.y == x);
     }
 
     public void ApplyPostProcessing()

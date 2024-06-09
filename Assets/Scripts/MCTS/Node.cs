@@ -24,14 +24,10 @@ public class Node
 
     public LevelGenerator levelGenerator;
 
-    // Debug Variable
-    EActionType action;
-
-    public Node(State _state, LevelGenerator _lg, EActionType _action)
+    public Node(State _state, LevelGenerator _lg)
     {
-        nodeState = new State(_state);
+        nodeState = _state;
         levelGenerator = _lg;
-        action = _action;
     }
 
     public void SearchTree()    // Called for root node, initial state of board
@@ -100,70 +96,83 @@ public class Node
     {
         if (nodeState.frozen == false)
         {
-            // Available actions: Delete obstacle, Place box, Freeze level
-            if ((nodeState.GetEmptyCount() + nodeState.GetBoxCount()) < Util.numSpaces)
-            {
-                // If there are any obstacles to delete
-                AddChildNode(EActionType.DeleteObstacle);
-            }
-
-            if (nodeState.GetEmptyCount() > 0)
-            {
-                // If there is an empty space to place a box in
-                AddChildNode(EActionType.PlaceBox);
-            }
-            
-            if (nodeState.GetBoxCount() > 0 && nodeState.GetEmptyCount() > 1)
-            {
-                // If there are at least 1 box and 2 spaces to move around in
-                AddChildNode(EActionType.FreezeLevel);
-            }
+            AddChildrenDeleteObstacle();
+            AddChildrenPlaceBox();
+            AddChildFreezeLevel();
         }
         else if (nodeState.saved == false)
         {
             // Available actions: Move agent, Evaluate level
-            AddChildNode(EActionType.MoveAgent);
-            AddChildNode(EActionType.EvaluateLevel);
+            AddChildrenMovePlayer();
+            AddChildSaveLevel();           
         }
     }
 
-    void AddChildNode(EActionType _action)
+    void AddChild(State _state)
     {
-        // Create child node
-        // Create action links for child
+        Node newChildNode = new Node(_state, levelGenerator);
+        children.Add(newChildNode);
+    }
 
-        Node newChildNode = new Node(nodeState, levelGenerator, _action);
-
-        bool childIsValid = false;
-
-        switch (_action)
+    void AddChildrenDeleteObstacle()
+    {
+        for (int y = 0; y < Util.height; y++)
         {
-            case EActionType.DeleteObstacle:
-                childIsValid = newChildNode.nodeState.DeleteRandomObstacle();
-                break;
-
-            case EActionType.PlaceBox:
-                childIsValid = newChildNode.nodeState.PlaceRandomBox();
-                break;
-
-            case EActionType.FreezeLevel:
-                childIsValid = newChildNode.nodeState.frozen = true;
-                break;
-
-            case EActionType.MoveAgent:
-                childIsValid = newChildNode.nodeState.MoveAgentRandomly();
-                break;
-
-            case EActionType.EvaluateLevel:
-                childIsValid = newChildNode.nodeState.Save();
-                break;
-
-            default:
-                break;
+            for (int x = 0; x < Util.width; x++)
+            {
+                State newState = nodeState.DeleteObstacle(y, x);
+                if (newState != null)
+                {
+                    AddChild(newState);
+                }
+            }
         }
+    }
 
-        if (childIsValid)
-            children.Add(newChildNode);
+    void AddChildrenPlaceBox()
+    {
+        for (int y = 0; y < Util.height; y++)
+        {
+            for (int x = 0; x < Util.width; x++)
+            {
+                State newState = nodeState.PlaceBox(y, x);
+                if (newState != null)
+                {
+                    AddChild(newState);
+                }
+            }
+        }
+    }
+
+    void AddChildFreezeLevel()
+    {
+        if (nodeState.GetBoxCount() > 0 && nodeState.GetEmptyCount() > 1)
+        {
+            State newState = new State(nodeState);
+            newState.frozen = true;
+            AddChild(newState);
+        }
+    }
+    
+    void AddChildrenMovePlayer()
+    {
+        foreach (Direction dir in System.Enum.GetValues(typeof(Direction)))
+        {
+            State newState = nodeState.MoveAgent(dir);
+            if (newState != null)
+            {
+                AddChild(newState);
+            }
+        }
+    }
+
+    void AddChildSaveLevel()
+    {
+        State newState = nodeState.SaveLevel();
+        if (newState != null)
+        {
+            AddChild(newState);
+        }
     }
 
     float Evaluate()
