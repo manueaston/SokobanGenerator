@@ -368,9 +368,7 @@ public class State
         }
         else
         {
-            //return null;
-            saved = true;
-            return newState;
+            return null;
         }
     }
 

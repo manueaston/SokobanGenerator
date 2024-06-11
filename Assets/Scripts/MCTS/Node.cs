@@ -17,7 +17,7 @@ public class Node
 
     public float evaluationScoreSum = 0.0f;
     public float visitCount = 0.0f;
-    //public List<float> evaluationScores = new List<float>();
+    public List<float> evaluationScores = new List<float>();
 
     public List<Node> children = new List<Node>();
     bool isVisited = false;
@@ -43,10 +43,7 @@ public class Node
         {
             Node selectedChild = currentNode.Select();
             if (selectedChild == null)
-            {
-                Debug.Log("WARNING: No children in current node but isn't saved and is visited");
                 break;
-            }
             // No possible actions from current Node
 
             currentNode = selectedChild;
@@ -214,7 +211,7 @@ public class Node
         visitCount++;
         evaluationScoreSum += _evalValue;
 
-        //evaluationScores.Add(_evalValue);
+        evaluationScores.Add(_evalValue);
     }
 
     float GetUCB(Node child)
