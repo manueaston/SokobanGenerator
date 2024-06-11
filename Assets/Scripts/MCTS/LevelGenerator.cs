@@ -14,8 +14,7 @@ public class LevelGenerator : MonoBehaviour
     Node savedNode;
 
     bool running = false;
-    int totalIterations = 500000;
-    int currentIteration = 1;
+    int iterationsRun = 0;
     public float secondsToRun = 10.0f;
     float startTime = 0.0f;
 
@@ -56,9 +55,12 @@ public class LevelGenerator : MonoBehaviour
         while (Time.realtimeSinceStartup - startTime < secondsToRun)
         {
             rootNode.SearchTree();
+            iterationsRun++;
         }
 
         CreateFinalLevel(savedNode.nodeState);
+
+        Debug.Log("Iterations: " + iterationsRun);
     }
 
     private void Update()
