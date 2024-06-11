@@ -34,7 +34,7 @@ public class Node
         action = _action;
     }
 
-    public void SearchTree()    // Called for root node, initial state of board
+    public bool SearchTree()    // Called for root node, initial state of board
     {
         LinkedList<Node> visitedNodes = new LinkedList<Node>();
         Node currentNode = this;
@@ -59,9 +59,16 @@ public class Node
                 break;
         }
 
+        // Check for valid puzzle layout
+        if (currentNode.nodeState.saved)
+        {
+            // Found valid puzzle layout
+            levelGenerator.SaveLevel(currentNode);
+            return true;
+        }
+
         // Expansion
-        if (!currentNode.nodeState.saved)
-            currentNode.Expand();
+        currentNode.Expand();
 
         // Evaluation
         float evaluationValue = currentNode.Evaluate();
@@ -71,6 +78,9 @@ public class Node
         {
             node.UpdateNode(evaluationValue);
         }
+
+        // Valid puzzle layout hasn't been reached yet
+        return false;
     }
 
     Node Select()
@@ -112,18 +122,17 @@ public class Node
                 // If there is an empty space to place a box in
                 AddChildNode(EActionType.PlaceBox);
             }
-            
-            if (nodeState.GetBoxCount() > 0 && nodeState.GetEmptyCount() > 1)
+
+            if (nodeState.GetBoxCount() > levelGenerator.currentMinBoxNum && nodeState.GetEmptyCount() > (levelGenerator.currentMinBoxNum * levelGenerator.currentMinBoxMove))
             {
-                // If there are at least 1 box and 2 spaces to move around in
                 AddChildNode(EActionType.FreezeLevel);
             }
         }
         else if (nodeState.saved == false)
         {
             // Available actions: Move agent, Evaluate level
-            AddChildNode(EActionType.MoveAgent);
             AddChildNode(EActionType.EvaluateLevel);
+            AddChildNode(EActionType.MoveAgent);
         }
     }
 
@@ -155,7 +164,7 @@ public class Node
                 break;
 
             case EActionType.EvaluateLevel:
-                childIsValid = newChildNode.nodeState.Save();
+                childIsValid = newChildNode.nodeState.Save(levelGenerator.currentMinBoxNum, levelGenerator.currentMinBoxMove);
                 break;
 
             default:
@@ -182,15 +191,6 @@ public class Node
         float boxCount = nodeState.GetBoxCount();
 
         float evaluationScore =  ((b * blockCount) + (c * congestion) + (n * boxCount)) / k;
-
-        //Debug.Log("Block count = " + blockCount + ", Congestion = " + congestion + ", Box Count = " + boxCount);
-
-        if (nodeState.saved == true)
-        {
-            levelGenerator.SaveLevel(this);
-        }
-
-        //Debug.Log("Action selected: " + action + " with score: " + evaluationScore);
 
         return evaluationScore;
     }

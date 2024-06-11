@@ -7,13 +7,18 @@ public class GameManager : MonoBehaviour
     int numBoxes = 0;
     int boxesAtGoal = 0;
     bool levelWon = false;
+    public int startingDifficulty;
 
     HUD hud;
+    LevelGenerator lg;
 
     // Start is called before the first frame update
     void Start()
     {
         hud = FindObjectOfType<HUD>();
+        lg = FindObjectOfType<LevelGenerator>();
+
+        StartCoroutine(lg.GeneratePuzzle(startingDifficulty));
     }
 
     public void UpdateBoxes(bool _boxAtGoal)

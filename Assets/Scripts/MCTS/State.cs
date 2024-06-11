@@ -358,16 +358,19 @@ public class State
         return true;
     }
 
-    public bool Save()
+    public bool Save(int minBoxNum, int minBoxMove)
     {
         saved = true;
 
         // Replace boxes that have never been pushed with obstacles
-        // Replace boxes that have only been pushed once with empty spaces
+        // Replace boxes that have not been pushed minBoxMove spaces with empty space
 
         for (int i = 0; i < boxCount; i++)
         {
-            if (Vector2Int.Distance(boxPos[i], boxStartPos[i]) <= 1)    // If box has moved less than 2 spaces
+            int xDiff = Mathf.Abs(boxPos[i].x - boxStartPos[i].x);
+            int yDiff = Mathf.Abs(boxPos[i].y - boxStartPos[i].y);
+
+            if ((xDiff + yDiff) < minBoxMove)    // If box has moved less than minBoxMove
             {
                 if (boxPos[i] == boxStartPos[i])
                 {
@@ -389,8 +392,8 @@ public class State
             }
         }
 
-        // Valid action if there is at least 1 box after post processing
-        return (boxCount > 0);
+        // Valid action if there is at least minBoxNum boxes after post processing
+        return (boxCount >= minBoxNum);
     }
 
     Vector2Int GetRandomSpace(char _spaceType, bool _canBePlayer = false)

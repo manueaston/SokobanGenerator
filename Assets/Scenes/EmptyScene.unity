@@ -130,6 +130,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 745644257790652228, guid: 99fe18e899129dc4e87e0272fe8cde9e, type: 3}
+      propertyPath: startingDifficulty
+      value: 4
+      objectReference: {fileID: 0}
     - target: {fileID: 3657422031590552752, guid: 99fe18e899129dc4e87e0272fe8cde9e, type: 3}
       propertyPath: m_Name
       value: GameManager
@@ -511,6 +515,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 336782312228923481, guid: cf4b02aadba6f6c4f902010376a44be2, type: 3}
+      propertyPath: minBoxNum
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 336782312228923481, guid: cf4b02aadba6f6c4f902010376a44be2, type: 3}
       propertyPath: secondsToRun
       value: 120

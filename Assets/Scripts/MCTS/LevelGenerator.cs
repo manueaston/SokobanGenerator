@@ -14,10 +14,15 @@ public class LevelGenerator : MonoBehaviour
     Node savedNode;
 
     bool running = false;
-    int totalIterations = 500000;
-    int currentIteration = 1;
-    public float secondsToRun = 10.0f;
+    bool solutionFound = false;
     float startTime = 0.0f;
+    float generationTime = 0.0f;
+
+    int maxDifficulty = 4;
+    int[] minBoxNums = { 1, 1, 2, 3, 2, 3 };
+    int[] minBoxMoves = { 2, 3, 2, 2, 3, 3 };
+    public int currentMinBoxNum = 1;
+    public int currentMinBoxMove = 2;
 
     public GameObject wall;
     public GameObject player;
@@ -31,16 +36,24 @@ public class LevelGenerator : MonoBehaviour
         hud = FindObjectOfType<HUD>();
 
         initialBoard.Initialise();
+    }
+
+    public IEnumerator GeneratePuzzle(int difficulty)
+    {
+        if (difficulty > maxDifficulty)
+        {
+            Debug.Log("Max Difficulty reached");
+            difficulty = maxDifficulty;
+        }
+
+        // Set difficulty variables
+        currentMinBoxNum = minBoxNums[difficulty];
+        currentMinBoxMove = minBoxMoves[difficulty];
 
         rootNode = new Node(initialBoard, this, EActionType.EvaluateLevel);
         savedNode = rootNode;
-        GenerateLevel(rootNode.nodeState);
+        CreateLevel(rootNode.nodeState);
 
-        StartCoroutine(StartMCTS());
-    }
-
-    IEnumerator StartMCTS()
-    {
         running = true;
         startTime = Time.realtimeSinceStartup;
         hud.SetGeneratingTextActive(true);
@@ -48,17 +61,17 @@ public class LevelGenerator : MonoBehaviour
         // Wait for next frame
         yield return 0;
 
-        //for (int i = 0; i < totalIterations; i++)
-        //{
-        //    rootNode.SearchTree();
-        //}
-
-        while (Time.realtimeSinceStartup - startTime < secondsToRun)
+        while (!solutionFound)
         {
-            rootNode.SearchTree();
+            solutionFound = rootNode.SearchTree();
         }
 
         CreateFinalLevel(savedNode.nodeState);
+        generationTime = Time.realtimeSinceStartup - startTime;
+        Debug.Log("Time taken to generate level of difficulty " + difficulty + ": " + generationTime);
+
+        // Delete tree
+        rootNode = null;
     }
 
     private void Update()
@@ -76,7 +89,7 @@ public class LevelGenerator : MonoBehaviour
 
     public void CreateFinalLevel(State _board)
     {
-        Debug.Log("Final evalution score = " + savedNode.GetAverageEvaluationScore());
+        //Debug.Log("Final evalution score = " + savedNode.GetAverageEvaluationScore());
 
         // Clear current level
         foreach (Transform child in this.transform)
@@ -86,10 +99,10 @@ public class LevelGenerator : MonoBehaviour
 
         _board.ApplyPostProcessing();
 
-        GenerateLevel(_board);
+        CreateLevel(_board);
         running = false;
 
-        gameManager.FinishedGenerating(secondsToRun, savedNode.nodeState.GetBoxCount());
+        gameManager.FinishedGenerating(generationTime, savedNode.nodeState.GetBoxCount());
     }
 
     void ResetLevel()
@@ -101,10 +114,10 @@ public class LevelGenerator : MonoBehaviour
         }
 
         // Regenerate level
-        GenerateLevel(savedNode.nodeState);
+        CreateLevel(savedNode.nodeState);
     }
 
-    public void GenerateLevel(State _board)
+    void CreateLevel(State _board)
     {
         int xStartPos = -Util.width / 2 - 1;
         int yStartPos = -Util.height / 2 - 1;
