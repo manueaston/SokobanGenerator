@@ -17,10 +17,11 @@ public class LevelGenerator : MonoBehaviour
     bool solutionFound = false;
     float startTime = 0.0f;
     float generationTime = 0.0f;
+    float gameTimer = 0.0f;
 
     int maxDifficulty = 4;
-    int[] minBoxNums = { 1, 1, 2, 3, 2, 3 };
-    int[] minBoxMoves = { 2, 3, 2, 2, 3, 3 };
+    int[] minBoxNums = { 1, 1, 2, 2, 3 };
+    int[] minBoxMoves = { 2, 3, 2, 3, 2 };
     public int currentMinBoxNum = 1;
     public int currentMinBoxMove = 2;
 
@@ -69,6 +70,7 @@ public class LevelGenerator : MonoBehaviour
         CreateFinalLevel(savedNode.nodeState);
         generationTime = Time.realtimeSinceStartup - startTime;
         Debug.Log("Time taken to generate level of difficulty " + difficulty + ": " + generationTime);
+        gameTimer = 0.0f;
 
         // Delete tree
         rootNode = null;
@@ -78,6 +80,7 @@ public class LevelGenerator : MonoBehaviour
     {
         if (!running)
         {
+            UpdateGameTimer();
             CheckResetLevel();
         }
     }
@@ -171,6 +174,11 @@ public class LevelGenerator : MonoBehaviour
             ResetLevel();
             gameManager.ResetLevel();
         }
+    }
+
+    void UpdateGameTimer()
+    {
+        gameTimer += Time.deltaTime;
     }
 }
 
