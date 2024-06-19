@@ -7,7 +7,10 @@ public class HUD : MonoBehaviour
 {
     public Text boxScoreText;
     public GameObject generatingTextObject;
-    public Text timeElapsedText;
+    public Text generationTimeText;
+    public Text playTimeText;
+    public Text difficultyText;
+    public Text adaptiveDifficultyText;
     public GameObject winTextObject;
 
     public void UpdateLevelWon(bool _levelWon)
@@ -27,8 +30,28 @@ public class HUD : MonoBehaviour
 
     public void UpdateTimeElapsedText(float newTime)
     {
-        int minutes = Mathf.FloorToInt(newTime / 60.0f);
-        int seconds = Mathf.FloorToInt(newTime % 60.0f);
-        timeElapsedText.text = minutes.ToString() + ":" + seconds.ToString();
+        generationTimeText.text = "Generation Time = " + newTime.ToString("F2") + "s";
+    }
+
+    public void UpdatePlayTimeText(float newTime)
+    {
+        playTimeText.text = "Puzzle Completion Time: " + newTime.ToString("F0") + "s";
+    }
+
+    public void UpdateDifficultyText(int difficulty)
+    {
+        difficultyText.text = "Current Difficulty: " + difficulty.ToString("F0");
+    }
+
+    public void UpdateAdaptiveDifficultyText(bool on)
+    {
+        if (on)
+        {
+            adaptiveDifficultyText.text = "True";
+        }
+        else
+        {
+            adaptiveDifficultyText.text = "False";
+        }
     }
 }

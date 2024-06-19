@@ -13,7 +13,7 @@ public class LevelGenerator : MonoBehaviour
     Node rootNode;
     Node savedNode;
 
-    bool running = false;
+    public bool running = false;
     bool solutionFound = false;
     float startTime = 0.0f;
     float generationTime = 0.0f;
@@ -70,10 +70,13 @@ public class LevelGenerator : MonoBehaviour
         CreateFinalLevel(savedNode.nodeState);
         generationTime = Time.realtimeSinceStartup - startTime;
         Debug.Log("Time taken to generate level of difficulty " + difficulty + ": " + generationTime);
+        hud.UpdateTimeElapsedText(generationTime);
         gameTimer = 0.0f;
 
         // Delete tree
         rootNode = null;
+        running = false;
+        solutionFound = false;
     }
 
     private void Update()

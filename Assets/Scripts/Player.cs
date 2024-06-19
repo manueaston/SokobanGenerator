@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class Player : MonoBehaviour
 {
@@ -21,8 +20,6 @@ public class Player : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        CheckRegenerateLevel();
-
         if (levelWon)
             return;
         // Player shouldn't be able to move if the level has been won
@@ -79,14 +76,6 @@ public class Player : MonoBehaviour
     void Move()
     {
         transform.position += moveDir;
-    }
-
-    void CheckRegenerateLevel()
-    {
-        if (Input.GetKeyDown(KeyCode.G))
-        {
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-        }
     }
 
     void CheckLevelWon()
