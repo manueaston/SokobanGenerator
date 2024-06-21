@@ -10,7 +10,6 @@ public class GameManager : MonoBehaviour
     bool levelWon = false;
     public int currentDifficulty;
     public bool adaptiveDifficultyOn;
-    int puzzleCounter = 0;
     float timeToSolve = 0.0f;
 
     HUD hud;

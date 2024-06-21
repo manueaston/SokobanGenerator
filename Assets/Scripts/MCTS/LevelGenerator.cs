@@ -41,6 +41,11 @@ public class LevelGenerator : MonoBehaviour
 
     public IEnumerator GeneratePuzzle(int difficulty)
     {
+        if (hud == null)
+        {
+            hud = FindObjectOfType<HUD>();
+        }
+
         if (difficulty > maxDifficulty)
         {
             Debug.Log("Max Difficulty reached");
